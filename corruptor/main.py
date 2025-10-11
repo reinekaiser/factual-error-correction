@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
-from .masker import Masker
+from masker import Masker
 
 def main(args):
     if args.data.endswith(".csv"):
