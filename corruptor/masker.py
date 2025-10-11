@@ -61,10 +61,6 @@ class Masker:
         filled_text = masked_text
         if self.tokenizer.mask_token in masked_text:
             filled_candidates = self.fill_pipeline(masked_text, top_k=top_k)
-
-            if filled_candidates and isinstance(filled_candidates[0], list):
-                filled_candidates = filled_candidates[0]
-
             context_tokens = set(context.split()) if context else set()
             for c in filled_candidates:
                 candidate_seq = c['sequence']
