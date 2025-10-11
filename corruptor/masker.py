@@ -2,7 +2,6 @@ import random
 import inspect
 import torch
 from transformers import AutoTokenizer, AutoModelForMaskedLM, pipeline
-from underthesea import ner, pos_tag
 
 class Masker:
     def __init__(self, tokenizer_name="xlm-roberta-base", use_mlm_fill=False, device=-1, mask_prob = 0.15):
