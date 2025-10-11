@@ -9,25 +9,25 @@ class Masker:
         self.mask_prob = mask_prob
 
     def tokenizer_mask_and_fill_wrong(self, claim, context="", top_k=10):
-        """
-        1. Tạo masked_text: claim có token bị [MASK]
-        2. Tạo filled_text: MLM fill [MASK], tránh token xuất hiện trong context
-        """
-        # ----- Step 1: Mask -----
         encoded = self.tokenizer(claim, return_tensors="pt")
         input_ids = encoded["input_ids"][0].clone()
         special_ids = {self.tokenizer.cls_token_id, self.tokenizer.sep_token_id, self.tokenizer.pad_token_id}
+        mask_token_id = self.tokenizer.mask_token_id
+        mask_token = self.tokenizer.mask_token  # <mask>
 
+        # Mask random tokens
         for i, tid in enumerate(input_ids):
             if int(tid) in special_ids:
                 continue
             if random.random() < self.mask_prob:
-                input_ids[i] = self.tokenizer.mask_token_id
+                input_ids[i] = mask_token_id
 
-        masked_text = self.tokenizer.decode(input_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+        # Decode giữ mask token
+        masked_text = self.tokenizer.decode(input_ids, skip_special_tokens=False, clean_up_tokenization_spaces=True)
 
-        filled_text = ""
-        if "[MASK]" in masked_text:
+        # Fill
+        filled_text = masked_text
+        if mask_token in masked_text:
             filled_candidates = self.fill_pipeline(masked_text, top_k=top_k)
             context_tokens = set(context.split())
             for c in filled_candidates:
@@ -39,3 +39,4 @@ class Masker:
                 filled_text = masked_text
 
         return masked_text, filled_text
+
