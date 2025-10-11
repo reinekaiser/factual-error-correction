@@ -11,7 +11,8 @@ class Masker:
             "fill-mask",
             model=tokenizer_name,
             tokenizer=tokenizer_name,
-            device=device
+            device=device,
+            batch_size=1
         )
         self.mask_token = self.tokenizer.mask_token
         self.mask_token_id = self.tokenizer.mask_token_id
