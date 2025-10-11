@@ -3,37 +3,55 @@ import pandas as pd
 import torch
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
+from datasets import Dataset
 from masker import Masker
+from tqdm import tqdm
 
 def main(args):
+    # ----- Load data -----
     if args.data.endswith(".csv"):
         df = pd.read_csv(args.data)
     elif args.data.endswith(".json"):
-        df = pd.read_json(args.data)
+        df = pd.read_json(args.data, lines=True)
     elif args.data.endswith(".parquet"):
         df = pd.read_parquet(args.data)
     else:
         raise ValueError("Unsupported file format")
 
+    # ----- Init tokenizer + masker -----
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name)
-    masker = Masker(tokenizer_name=args.tokenizer_name, mask_prob = args.mask_prob, device=args.device)
+    masker = Masker(
+        tokenizer_name=args.tokenizer_name,
+        mask_prob=args.mask_prob,
+        device=args.device,
+        use_mlm_fill=True
+    )
+
+    # ----- Convert to HF Dataset -----
+    ds = Dataset.from_pandas(df)
 
     masked_claims = []
     filled_claims = []
 
-    for idx, row in df.iterrows():
-        claim = row[args.claim_col]
-        evidence = row[args.evidence_col]
+    # ----- Batch processing -----
+    batch_size = args.batch_size if hasattr(args, "batch_size") else 8
+    for i in tqdm(range(0, len(ds), batch_size), desc="Masking & Filling"):
+        batch = ds[i:i+batch_size]
+        claims = batch["Statement"]
+        evidences = batch["Evidence"]
 
-        masked_claim, filled_claim = masker.tokenizer_mask_and_fill_wrong(claim, evidence, top_k=args.top_k)
-        masked_claims.append(masked_claim)
-        filled_claims.append(filled_claim)
+        for claim, evidence in zip(claims, evidences):
+            masked_text, filled_text = masker.tokenizer_mask_and_fill_wrong(
+                claim, context=evidence, top_k=args.top_k
+            )
+            masked_claims.append(masked_text)
+            filled_claims.append(filled_text)
 
-    # Add corrupted claims and new labels to DataFrame
+    # ----- Add to DataFrame -----
     df["Masked_Claim"] = masked_claims
     df["Corrupted_Claim"] = filled_claims
 
-    # Save masked DataFrame
+    # ----- Save -----
     output_file = args.output if args.output else "masked_df.csv"
     if output_file.endswith(".csv"):
         df.to_csv(output_file, index=False)
@@ -45,6 +63,7 @@ def main(args):
         raise ValueError("Unsupported output file format")
 
     print(f"Masked DataFrame saved to {output_file}")
+
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
