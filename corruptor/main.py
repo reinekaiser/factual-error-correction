@@ -24,7 +24,6 @@ def main(args):
         tokenizer_name=args.tokenizer_name,
         mask_prob=args.mask_prob,
         device=args.device,
-        use_mlm_fill=True
     )
 
     # ----- Convert to HF Dataset -----
