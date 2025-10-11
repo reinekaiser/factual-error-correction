@@ -16,7 +16,7 @@ def main(args):
         raise ValueError("Unsupported file format")
 
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name)
-    masker = Masker(tokenizer_name=args.tokenizer_name, mask_prob = args.mask_prob)
+    masker = Masker(tokenizer_name=args.tokenizer_name, mask_prob = args.mask_prob, device=args.device)
 
     masked_claims = []
     filled_claims = []
@@ -57,6 +57,7 @@ if __name__=="__main__":
     parser.add_argument("--label_col", type=str, default="labels")
     parser.add_argument("--top_k", type=int, default=10)
     parser.add_argument("--mask_prob", type=float, default=0.3)
+    parser.add_argument("--device", type=int, default=-1)
     
     args = parser.parse_args()
     main(args)
