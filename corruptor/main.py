@@ -16,7 +16,7 @@ def main(args):
         raise ValueError("Unsupported file format")
 
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name)
-    masker = Masker(tokenizer_name=args.tokenizer_name, use_mlm_fill = True, mask_prob = args.mask_prob)
+    masker = Masker(tokenizer_name=args.tokenizer_name, mask_prob = args.mask_prob)
 
     masked_claims = []
     filled_claims = []
