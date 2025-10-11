@@ -11,8 +11,10 @@ class Masker:
             "fill-mask",
             model=tokenizer_name,
             tokenizer=tokenizer_name,
-            device=device if device>=0 else -1
+            device=device
         )
+        self.mask_token = self.tokenizer.mask_token
+        self.mask_token_id = self.tokenizer.mask_token_id
 
     def tokenizer_mask_and_fill_wrong(self, claim, context="", top_k=10):
         """
@@ -56,7 +58,7 @@ class Masker:
 
         # ----- Step 2: MLM fill -----
         filled_text = masked_text
-        if self.use_mlm_fill and self.tokenizer.mask_token in masked_text:
+        if self.tokenizer.mask_token in masked_text:
             filled_candidates = self.fill_pipeline(masked_text, top_k=top_k)
             context_tokens = set(context.split()) if context else set()
             for c in filled_candidates:
