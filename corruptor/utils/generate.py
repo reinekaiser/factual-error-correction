@@ -7,7 +7,7 @@ from corruptor.utils.helper import collate_fn
 from torch.utils.data import DataLoader, SequentialSampler
 
 def generate(model, tokenizer, dataloader, device,
-             output_dir = "./generated.csv", 
+             generated_dir = "./generated.csv", 
              max_len = 128,
              num_beams = 4, do_sample = False,
              top_k = 50, top_p = 0.9, temperature = 1.0):
@@ -43,12 +43,12 @@ def generate(model, tokenizer, dataloader, device,
         "generated_text": all_gen
     })
 
-    if output_dir.endswith(".xlsx"):
-        df.to_excel(output_dir, index=False)
+    if generated_dir.endswith(".xlsx"):
+        df.to_excel(generated_dir, index=False)
     else:
-        df.to_csv(output_dir, index=False, encoding="utf-8")
+        df.to_csv(generated_dir, index=False, encoding="utf-8")
 
-    print(f"\nSaved generated results to: {output_dir}")
+    print(f"\nSaved generated results to: {generated_dir}")
     return df
 
 def predict(model, tokenizer, args):
@@ -75,7 +75,7 @@ def predict(model, tokenizer, args):
     
     return generate(
         model, tokenizer, dataloader, args.device,
-        output_dir = args.output_dir, 
+        generated_dir = args.generated_dir, 
         max_len = args.max_len,
         num_beams = args.num_beams, do_sample = args.do_sample,
         top_k = args.top_k, top_p = args.top_p, temperature = args.temperature

@@ -1,82 +1,79 @@
-import argparse
-import pandas as pd
 import torch
-from transformers import AutoTokenizer
-from torch.utils.data import DataLoader
-from datasets import Dataset
-from masker import Masker
+from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
+import os
+import time
+import argparse
+import random
 from tqdm import tqdm
+import logging
+import sys
+from corruptor.utils.train import train
+from corruptor.utils.evaluate import evaluate
+from corruptor.utils.generate import predict
+from corruptor.utils.helper import get_optimizer, load_model, set_env
 
-def main(args):
-    # ----- Load data -----
-    if args.data.endswith(".csv"):
-        df = pd.read_csv(args.data)
-    elif args.data.endswith(".json"):
-        df = pd.read_json(args.data, lines=True)
-    elif args.data.endswith(".parquet"):
-        df = pd.read_parquet(args.data)
-    else:
-        raise ValueError("Unsupported file format")
+import warnings
+from transformers import logging as tf_log
+warnings.filterwarnings("ignore")
+tf_log.set_verbosity_error()
 
-    # ----- Init tokenizer + masker -----
-    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name)
-    masker = Masker(
-        tokenizer_name=args.tokenizer_name,
-        mask_prob=args.mask_prob,
-        device=args.device,
-    )
+logger = logging.getLogger("__main__")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 
-    # ----- Convert to HF Dataset -----
-    ds = Dataset.from_pandas(df)
-
-    masked_claims = []
-    filled_claims = []
-
-    # ----- Batch processing -----
-    batch_size = args.batch_size if hasattr(args, "batch_size") else 8
-    for i in tqdm(range(0, len(ds), batch_size), desc="Masking & Filling"):
-        batch = ds[i:i+batch_size]
-        claims = batch["Statement"]
-        evidences = batch["Evidence"]
-
-        for claim, evidence in zip(claims, evidences):
-            masked_text, filled_text = masker.tokenizer_mask_and_fill_wrong(
-                claim, context=evidence, top_k=args.top_k
-            )
-            masked_claims.append(masked_text)
-            filled_claims.append(filled_text)
-
-    # ----- Add to DataFrame -----
-    df["Masked_Claim"] = masked_claims
-    df["Corrupted_Claim"] = filled_claims
-
-    # ----- Save -----
-    output_file = args.output if args.output else "masked_df.csv"
-    if output_file.endswith(".csv"):
-        df.to_csv(output_file, index=False)
-    elif output_file.endswith(".json"):
-        df.to_json(output_file, orient="records", lines=True)
-    elif output_file.endswith(".parquet"):
-        df.to_parquet(output_file, index=False)
-    else:
-        raise ValueError("Unsupported output file format")
-
-    print(f"Masked DataFrame saved to {output_file}")
-
-
-if __name__=="__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, required=True, help="Path to CSV/JSON/Parquet dataset")
-    parser.add_argument("--tokenizer_name", type=str, default="xlm-roberta-base")
-    parser.add_argument("--max_len", type=int, default=128)
-    parser.add_argument("--claim_col", type=str, default="Statement")
-    parser.add_argument("--evidence_col", type=str, default="Evidence")
-    parser.add_argument("--output", type=str)
-    parser.add_argument("--label_col", type=str, default="labels")
-    parser.add_argument("--top_k", type=int, default=10)
-    parser.add_argument("--mask_prob", type=float, default=0.3)
-    parser.add_argument("--device", type=int, default=-1)
-    
+def get_parameter():
+    parser = argparse.ArgumentParser(description="Factual Error Correction.")
+    parser.add_argument('--do_train', action='store_true', help='Whether to run training.')
+    parser.add_argument('--do_eval', action='store_true', help='Whether to run eval on the dev/test set.')
+    parser.add_argument('--do_predict', action='store_true', help='Whether to create mutated text.')
+    parser.add_argument('--device', type = str, default = 'cuda:0')
+    parser.add_argument('--random_state', type = int, default = 12)
+    parser.add_argument('--num_workers', type=int, default=5, help='The number of processes to use for the preprocessing.')
+    parser.add_argument('--train_dir', type=str, default=None, help='The input training data file.')
+    parser.add_argument('--dev_dir', type=str, default=None, help='The input evaluating dev file.')  
+    parser.add_argument('--test_dir', type=str, default=None, help='The input evaluating test file.')
+    parser.add_argument('--src_column', type = str, default = "original_VI", help = "source column in dataset")
+    parser.add_argument('--tgt_column', type = str, default = "mutated_VI", help = "target column in dataset")
+    parser.add_argument('--evidence_column', type = str, default = "gold_evidence_VI", help = "evidence column in dataset")
+    parser.add_argument('--label_column', type = str, default = "labels", help = "labels column in dataset")
+    parser.add_argument('--model_name', type=str, default='VietAI/vit5-base')
+    parser.add_argument('--batch_size', type=int, default=64)
+    parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--optimizer', type=str, default='adamW', help='The optimizer to use.')
+    parser.add_argument('--lr', type=float, default=4e-5, help='The initial learning rate for training.')
+    parser.add_argument('--weight_decay', type=float, default=0.01, help='Weight decay for AdamW if we apply some.')
+    parser.add_argument('--adam_epsilon', type=float, default=1e-8, help='Epsilon for AdamW optimizer.')
+    parser.add_argument('--max_grad_norm', type=float, default=0.5, help='Max gradient norm.')
+    parser.add_argument('--max_len', type=int, default=512, help='the max length of the text.')
+    parser.add_argument("--output_dir", type=str, default=None, help="dir for model checkpoints, logs.")
+    parser.add_argument("--generated_dir", type=str, help="dir to store generated text.")
     args = parser.parse_args()
-    main(args)
 
+    return args
+
+def main():
+    args = get_parameter()
+    set_env(args)
+    tokenizer, model = load_model(args)
+
+    if args.do_train:
+        logger.info("*** Train ***")
+        global_step = train(model, tokenizer, args)
+        logger.info(" global_step = %s", global_step)
+
+    if args.do_eval:
+        logger.info("*** Evaluate ***") 
+        evaluate(model, tokenizer, args)
+
+    if args.do_predict:
+        logger.info("*** Predict ***")
+        predict(model, tokenizer, args)
+
+if __name__ == "__main__":
+    main()

@@ -12,6 +12,10 @@ def train(model, tokenizer, args):
         max_len = args.max_len,
         inference = False,
         mask_ratio = args.mask_ratio,
+        src_column = args.src_column,
+        tgt_column = args.tgt_column,
+        evidence_column = args.evidence_column,
+        label_column = args.label_column
     )
 
     train_loader = DataLoader(
@@ -28,7 +32,12 @@ def train(model, tokenizer, args):
             args.dev_dir, tokenizer,
             max_len=args.max_len,
             inference=False,
-            mask_ratio = args.mask_ratio
+            mask_ratio = args.mask_ratio,
+            src_column = args.src_column,
+            tgt_column = args.tgt_column,
+            evidence_column = args.evidence_column,
+            label_column = args.label_column,
+            is_inference = True
         )
 
         dev_loader = DataLoader(
