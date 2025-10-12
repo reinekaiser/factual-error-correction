@@ -12,7 +12,7 @@ def evaluate_dev(model, dataloader, device):
 
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Evaluating"):
-            batch = {k: v.to(device) for k, v in batch.items()}
+            batch = {k: (v.to(device) if hasattr(v, "to") else v) for k, v in batch.items()}
 
             outputs = model(**batch)
             loss = outputs["loss"] if isinstance(outputs, dict) else outputs.loss
