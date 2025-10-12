@@ -2,8 +2,8 @@ from tqdm import tqdm
 import torch
 import pandas as pd
 import os
-from corruptor.utils.cr_dataset import CRDataset
-from corruptor.utils.helper import collate_fn
+from .cr_dataset import CRDataset
+from .helper import collate_fn
 from torch.utils.data import DataLoader, SequentialSampler
 
 def generate(model, tokenizer, dataloader, device,

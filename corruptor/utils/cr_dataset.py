@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset
 import os, sys
 import pandas as pd
-from corruptor.utils.masker import mask
+from .masker import mask
 LABEL_DICT = {"SUPPORTS":0, "REFUTES":1, "NOT ENOUGH INFO":2}
 
 class CRDataset(Dataset):
