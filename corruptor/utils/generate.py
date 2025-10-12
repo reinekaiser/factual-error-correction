@@ -54,7 +54,7 @@ def generate(model, tokenizer, dataloader, device,
 def predict(model, tokenizer, args):
     test = CRDataset(
         args.test_dir,
-        tokenizer,
+        tokenizer = tokenizer,
         max_len = args.max_len,
         mask_ratio = args.mask_ratio,
         src_column = args.src_column,

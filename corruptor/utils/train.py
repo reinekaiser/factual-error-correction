@@ -8,7 +8,7 @@ def train(model, tokenizer, args):
 
     train = CRDataset(
         args.train_dir, 
-        tokenizer,
+        tokenizer = tokenizer,
         max_len = args.max_len,
         is_inference = False,
         mask_ratio = args.mask_ratio,
@@ -29,7 +29,8 @@ def train(model, tokenizer, args):
     dev_loader = None
     if getattr(args, "dev_dir", None):
         dev = CRDataset(
-            args.dev_dir, tokenizer,
+            args.dev_dir, 
+            tokenizer = tokenizer,
             max_len=args.max_len,
             inference=False,
             mask_ratio = args.mask_ratio,

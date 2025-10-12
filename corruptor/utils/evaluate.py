@@ -36,7 +36,7 @@ def evaluate(model, tokenizer, args):
 
     dev = CRDataset(
         args.dev_dir,
-        tokenizer,
+        tokenizer = tokenizer,
         max_len = args.max_len,
         inference = False,
         mask_ratio = args.mask_ratio,
