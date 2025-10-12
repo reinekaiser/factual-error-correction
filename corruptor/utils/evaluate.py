@@ -12,12 +12,21 @@ def evaluate_dev(model, dataloader, device):
 
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Evaluating"):
-            batch = {k: (v.to(device) if hasattr(v, "to") else v) for k, v in batch.items()}
+            for k, v in batch.items():
+                if hasattr(v, "to"):
+                    batch[k] = v.to(device)
 
-            outputs = model(**batch)
+            valid_keys = {
+                "input_ids", "attention_mask", "decoder_input_ids",
+                "decoder_attention_mask", "labels"
+            }
+            batch_inputs = {k: v for k, v in batch.items() if k in valid_keys}
+
+            outputs = model(**batch_inputs)
+
             loss = outputs["loss"] if isinstance(outputs, dict) else outputs.loss
-            labels = batch.get(args.label_column, None)
-            
+            labels = batch.get("labels", None)
+
             if labels is not None:
                 num_tokens = (labels != -100).sum().item()
             else:
@@ -30,6 +39,7 @@ def evaluate_dev(model, dataloader, device):
     print(f"Validation loss: {avg_loss:.4f}")
     model.train()
     return avg_loss
+
 
 def evaluate(model, tokenizer, args):
     model.to(args.device)
