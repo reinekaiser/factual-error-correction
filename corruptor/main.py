@@ -1,17 +1,19 @@
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
-import os
 import time
 import argparse
 import random
 from tqdm import tqdm
 import logging
-import sys
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from corruptor.utils.train import train
 from corruptor.utils.evaluate import evaluate
 from corruptor.utils.generate import predict
 from corruptor.utils.helper import get_optimizer, load_model, set_env
+
 
 import warnings
 from transformers import logging as tf_log
