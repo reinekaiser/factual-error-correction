@@ -3,6 +3,7 @@ from .helper import collate_fn
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.optim import AdamW, Adam
 from tqdm import tqdm
+from functools import partial
 
 def train(model, tokenizer, args):
     device = args.device
@@ -23,7 +24,7 @@ def train(model, tokenizer, args):
     train_loader = DataLoader(
         train,
         sampler = RandomSampler(train),
-        collate_fn = collate_fn,
+        collate_fn = partial(collate_fn, tokenizer=tokenizer),
         batch_size = args.batch_size,
         num_workers = args.num_workers
     )
@@ -45,7 +46,7 @@ def train(model, tokenizer, args):
         dev_loader = DataLoader(
             dev,
             sampler=SequentialSampler(dev),
-            collate_fn=collate_fn,
+            collate_fn=collate_fnpartial(collate_fn, tokenizer=tokenizer, inference = True),
             batch_size=args.batch_size,
             num_workers=args.num_workers
         )

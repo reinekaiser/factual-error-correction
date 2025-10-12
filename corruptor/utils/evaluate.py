@@ -1,6 +1,7 @@
 import torch
 from tqdm import tqdm
 import pandas as pd
+from functools import partial
 from .cr_dataset import CRDataset
 from .helper import collate_fn
 
@@ -49,7 +50,7 @@ def evaluate(model, tokenizer, args):
     dev_loader = DataLoader(
         dev,
         sampler=SequentialSampler(dev),
-        collate_fn=collate_fn,
+        collate_fn=partial(collate_fn, tokenizer=tokenizer, inference = True),
         batch_size=args.batch_size,
         num_workers=args.num_workers
     )

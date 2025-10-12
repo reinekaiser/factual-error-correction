@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from .cr_dataset import CRDataset
 from .helper import collate_fn
+from functools import partial
 from torch.utils.data import DataLoader, SequentialSampler
 
 def generate(model, tokenizer, dataloader, device,
@@ -68,7 +69,7 @@ def predict(model, tokenizer, args):
     test_loader = DataLoader(
         test,
         sampler = SequentialSampler(test),
-        collate_fn = collate_fn,
+        collate_fn = partial(collate_fn, tokenizer=tokenizer, inference = True),
         batch_size = args.batch_size,
         num_workers = args.num_workers
     )
