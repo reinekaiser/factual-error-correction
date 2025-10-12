@@ -41,7 +41,7 @@ def train(model, tokenizer, args):
             tgt_column = args.tgt_column,
             evidence_column = args.evidence_column,
             label_column = args.label_column,
-            is_inference = True
+            is_inference = False
         )
 
         dev_loader = DataLoader(
