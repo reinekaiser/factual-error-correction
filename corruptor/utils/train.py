@@ -1,0 +1,83 @@
+from corruptor.utils.cr_dataset import CRDataset
+from corruptor.utils.helper import collate_fn
+from torch.utils.data import RandomSampler, SequentialSampler
+
+def train(model, tokenizer, args):
+    device = args.device
+    model.to(device)
+
+    train = CRDataset(
+        args.train_dir, 
+        tokenizer,
+        max_len = args.max_len,
+        inference = False,
+        mask_ratio = args.mask_ratio,
+    )
+
+    train_loader = DataLoader(
+        train,
+        sampler = RandomSampler(train_dataset),
+        collate_fn = collate_fn,
+        batch_size = args.batch_size,
+        num_workers = args.num_workers
+    )
+
+    dev_loader = None
+    if getattr(args, "dev_dir", None):
+        dev = CRDataset(
+            args.dev_dir, tokenizer,
+            max_len=args.max_len,
+            inference=False,
+            mask_ratio = args.mask_ratio
+        )
+
+        dev_loader = DataLoader(
+            dev,
+            sampler=SequentialSampler(dev_dataset),
+            collate_fn=collate_fn,
+            batch_size=args.batch_size,
+            num_workers=args.num_workers
+        )
+
+    optimizer = AdamW(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+
+    print(f"Training initialized for {args.epochs} epochs.")
+
+    for epoch in range(args.epochs):
+        epoch_loss = 0.0
+        progress = tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.num_train_epochs}", total=len(train_loader))
+
+        for batch in progress:
+            batch = {k: v.to(device) for k, v in batch.items()}
+
+            outputs = model(**batch)
+            loss = outputs["loss"] if isinstance(outputs, dict) else outputs.loss
+            loss.backward()
+
+            optimizer.step()
+            scheduler.step()
+            optimizer.zero_grad()
+
+            epoch_loss += loss.item()
+            progress.set_postfix(loss=f"{loss.item():.4f}")
+
+        avg_train_loss = epoch_loss / len(train_loader)
+        print(f"Epoch {epoch+1} done | Train loss: {avg_train_loss:.4f}")
+
+        if dev_loader:
+            dev_loss = evaluate_dev(model, dev_loader, device)
+            print(f"Validation loss: {dev_loss:.4f}")
+            train_log.append({"epoch": epoch+1, "train_loss": avg_train_loss, "val_loss": dev_loss})
+        else:
+            train_log.append({"epoch": epoch+1, "train_loss": avg_train_loss})
+
+        save_dir = os.path.join(args.output_dir, f"epoch_{epoch+1}")
+        os.makedirs(save_dir, exist_ok=True)
+        model.save_pretrained(save_dir)
+        tokenizer.save_pretrained(save_dir)
+        print(f"Model saved to {save_dir}")
+
+    pd.DataFrame(train_log).to_csv(os.path.join(args.output_dir, "train_log.csv"), index=False)
+    print(f"\nTraining log saved to {os.path.join(args.output_dir, 'train_log.csv')}")
+
+    return model
