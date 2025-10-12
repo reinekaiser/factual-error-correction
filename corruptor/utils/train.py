@@ -77,7 +77,7 @@ def train(model, tokenizer, args):
         print(f"Epoch {epoch+1} done | Train loss: {avg_train_loss:.4f}")
 
         if dev_loader:
-            dev_loss = evaluate_dev(model, dev_loader, device)
+            dev_loss = evaluate_dev(args, model, dev_loader, device)
             print(f"Validation loss: {dev_loss:.4f}")
             train_log.append({"epoch": epoch+1, "train_loss": avg_train_loss, "val_loss": dev_loss})
         else:
