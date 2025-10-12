@@ -56,7 +56,7 @@ def train(model, tokenizer, args):
 
     for epoch in range(args.epochs):
         epoch_loss = 0.0
-        progress = tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.num_train_epochs}", total=len(train_loader))
+        progress = tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs}", total=len(train_loader))
 
         for batch in progress:
             batch = {k: v.to(device) for k, v in batch.items()}
