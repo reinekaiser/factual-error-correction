@@ -55,28 +55,31 @@ def get_optimizer(opt_name, model, lr, weight_decay=0.0, adam_epsilon=1e-8):
     else:
         raise ValueError(f"Unsupported optimizer: {opt_name}")
 
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import torch
+import os
+
 def load_model(args):
-    if "do_train" in args and args.do_train:
-        tokenizer = AutoTokenizer.from_pretrained(f'{args.model_name}')
-        model = MeanMaxPoolingModel(model_name = args.model_name, num_labels=3)
-        model.to(args.device)
+    model_path = args.model_name
+    device = args.device
+
+    if getattr(args, "do_train", False):
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+        model.to(device)
+        print(f"Loaded ViT5 model for training from {model_path}")
         return tokenizer, model
-    elif "do_train" not in args or ("do_eval" in args and args.do_eval):
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-        from transformers import T5EncoderModel
-        model = MeanMaxPoolingModel.__new__(MeanMaxPoolingModel)
-        super(MeanMaxPoolingModel, model).__init__()
+    elif getattr(args, "do_eval", False) or getattr(args, "do_predict", False):
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
         
-        from transformers import T5EncoderModel
-        model.encoder = T5EncoderModel.from_pretrained(f"{args.model_name}/encoder")
-        
-        hidden_size = model.encoder.config.d_model
-        model.pooling = MeanMaxPooling(hidden_size, hidden_size)
-        model.classifier = nn.Linear(hidden_size, 3)
-        
-        checkpoint = torch.load(f"{args.model_name}/head_pooling.bin", map_location=args.device)
-        model.classifier.load_state_dict(checkpoint["classifier"])
-        model.pooling.load_state_dict(checkpoint["pooling"])
-        
-        model.to(args.device)
+        if os.path.exists(os.path.join(model_path, "pytorch_model.bin")):
+            model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+            print(f"Loaded fine-tuned ViT5 model from {model_path}")
+        else:
+            model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+            print(f"Loaded base ViT5 model (no fine-tuned weights found).")
+
+        model.to(device)
         return tokenizer, model
+    else:
+        raise ValueError("Please specify either args.do_train=True or args.do_eval=True.")
