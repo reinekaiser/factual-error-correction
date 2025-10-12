@@ -67,7 +67,6 @@ def train(model, tokenizer, args):
             loss.backward()
 
             optimizer.step()
-            scheduler.step()
             optimizer.zero_grad()
 
             epoch_loss += loss.item()
