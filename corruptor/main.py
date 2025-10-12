@@ -43,6 +43,7 @@ def get_parameter():
     parser.add_argument('--tgt_column', type = str, default = "mutated_VI", help = "target column in dataset")
     parser.add_argument('--evidence_column', type = str, default = "gold_evidence_VI", help = "evidence column in dataset")
     parser.add_argument('--label_column', type = str, default = "labels", help = "labels column in dataset")
+    parser.add_argument('--mask_ratio', type = float, default = 0.15, help = "Masking ratio on original claims")
     parser.add_argument('--model_name', type=str, default='VietAI/vit5-base')
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--epochs', type=int, default=100)
