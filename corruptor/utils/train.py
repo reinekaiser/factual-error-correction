@@ -47,7 +47,7 @@ def train(model, tokenizer, args):
         dev_loader = DataLoader(
             dev,
             sampler=SequentialSampler(dev),
-            collate_fn=partial(collate_fn, tokenizer=tokenizer, inference = True),
+            collate_fn=partial(collate_fn, tokenizer=tokenizer),
             batch_size=args.batch_size,
             num_workers=args.num_workers
         )
