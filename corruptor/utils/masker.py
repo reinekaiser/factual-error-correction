@@ -1,3 +1,5 @@
+import random
+
 def mask(src=None, evidence=None, tokenizer=None, mask_ratio=0.15):
     src_tokens = tokenizer.tokenize(src)
     evidence_tokens = tokenizer.tokenize(evidence)
