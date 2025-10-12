@@ -5,10 +5,9 @@ from functools import partial
 from .cr_dataset import CRDataset
 from .helper import collate_fn
 
-def evaluate_dev(model, dataloader, device):
+def evaluate_dev(model, dataloader, device, tokenizer, max_length=64):
     model.eval()
-    total_loss = 0.0
-    total_tokens = 0
+    predictions = []
 
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Evaluating"):
@@ -16,30 +15,19 @@ def evaluate_dev(model, dataloader, device):
                 if hasattr(v, "to"):
                     batch[k] = v.to(device)
 
-            valid_keys = {
-                "input_ids", "attention_mask", "decoder_input_ids",
-                "decoder_attention_mask", "labels"
-            }
-            batch_inputs = {k: v for k, v in batch.items() if k in valid_keys}
+            input_ids = batch["input_ids"]
+            attention_mask = batch["attention_mask"]
 
-            outputs = model(**batch_inputs)
+            generated_ids = model.generate(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                max_length=max_length
+            )
 
-            loss = outputs["loss"] if isinstance(outputs, dict) else outputs.loss
-            labels = batch.get("labels", None)
+            decoded = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+            predictions.extend(decoded)
 
-            if labels is not None:
-                num_tokens = (labels != -100).sum().item()
-            else:
-                num_tokens = 1
-
-            total_loss += loss.item() * num_tokens
-            total_tokens += num_tokens
-
-    avg_loss = total_loss / max(total_tokens, 1)
-    print(f"Validation loss: {avg_loss:.4f}")
-    model.train()
-    return avg_loss
-
+    return predictions
 
 def evaluate(model, tokenizer, args):
     model.to(args.device)
