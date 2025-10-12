@@ -38,7 +38,6 @@ def evaluate(model, tokenizer, args):
         args.dev_dir,
         tokenizer = tokenizer,
         max_len = args.max_len,
-        inference = False,
         mask_ratio = args.mask_ratio,
         src_column = args.src_column,
         tgt_column = args.tgt_column,
