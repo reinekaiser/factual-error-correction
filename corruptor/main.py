@@ -8,10 +8,10 @@ import random
 from tqdm import tqdm
 import logging
 import sys
-from .utils.train import train
-from .utils.evaluate import evaluate
-from .utils.generate import predict
-from .utils.helper import get_optimizer, load_model, set_env
+from utils.train import train
+from utils.evaluate import evaluate
+from utils.generate import predict
+from utils.helper import get_optimizer, load_model, set_env
 
 
 import warnings

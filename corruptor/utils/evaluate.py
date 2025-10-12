@@ -1,8 +1,8 @@
 import torch
 from tqdm import tqdm
 import pandas as pd
-from .cr_dataset import CRDataset
-from .helper import collate_fn
+from cr_dataset import CRDataset
+from helper import collate_fn
 
 def evaluate_dev(model, dataloader, device):
     model.eval()
