@@ -20,7 +20,7 @@ def train(model, tokenizer, args):
 
     train_loader = DataLoader(
         train,
-        sampler = RandomSampler(train_dataset),
+        sampler = RandomSampler(train),
         collate_fn = collate_fn,
         batch_size = args.batch_size,
         num_workers = args.num_workers
@@ -43,7 +43,7 @@ def train(model, tokenizer, args):
 
         dev_loader = DataLoader(
             dev,
-            sampler=SequentialSampler(dev_dataset),
+            sampler=SequentialSampler(dev),
             collate_fn=collate_fn,
             batch_size=args.batch_size,
             num_workers=args.num_workers
