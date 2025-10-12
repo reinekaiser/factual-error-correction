@@ -1,5 +1,6 @@
 from .cr_dataset import CRDataset
 from .helper import collate_fn
+from .evaluate import evaluate_dev
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.optim import AdamW, Adam
 from tqdm import tqdm
