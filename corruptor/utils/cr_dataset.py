@@ -18,7 +18,7 @@ class CRDataset(Dataset):
         self.max_len = max_len
         self.transform = transform
 
-        self.src_column = claim_column
+        self.src_column = src_column
         self.tgt_column = tgt_column
         self.evidence_column = evidence_column
         self.label_column = label_column
