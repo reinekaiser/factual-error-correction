@@ -5,7 +5,7 @@ from functools import partial
 from .cr_dataset import CRDataset
 from .helper import collate_fn
 
-def evaluate_dev(model, dataloader, device):
+def evaluate_dev(args, model, dataloader, device):
     model.eval()
     total_loss = 0.0
     total_tokens = 0
@@ -55,5 +55,5 @@ def evaluate(model, tokenizer, args):
         num_workers=args.num_workers
     )
 
-    dev_loss = evaluate_dev(model, dev_loader, args.device)
+    dev_loss = evaluate_dev(args, model, dev_loader, args.device)
     return dev_loss
