@@ -10,7 +10,7 @@ def train(model, tokenizer, args):
         args.train_dir, 
         tokenizer,
         max_len = args.max_len,
-        inference = False,
+        is_inference = False,
         mask_ratio = args.mask_ratio,
         src_column = args.src_column,
         tgt_column = args.tgt_column,

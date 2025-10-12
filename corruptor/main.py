@@ -66,8 +66,7 @@ def main():
 
     if args.do_train:
         logger.info("*** Train ***")
-        global_step = train(model, tokenizer, args)
-        logger.info(" global_step = %s", global_step)
+        train(model, tokenizer, args)
 
     if args.do_eval:
         logger.info("*** Evaluate ***") 
