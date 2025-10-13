@@ -79,17 +79,11 @@ def train(model, tokenizer, args):
         if dev_loader:
             dev_loss = evaluate_dev(args, model, dev_loader, device)
             print(f"Validation loss: {dev_loss:.4f}")
-            train_log.append({"epoch": epoch+1, "train_loss": avg_train_loss, "val_loss": dev_loss})
-        else:
-            train_log.append({"epoch": epoch+1, "train_loss": avg_train_loss})
 
         save_dir = os.path.join(args.output_dir, f"epoch_{epoch+1}")
         os.makedirs(save_dir, exist_ok=True)
         model.save_pretrained(save_dir)
         tokenizer.save_pretrained(save_dir)
         print(f"Model saved to {save_dir}")
-
-    pd.DataFrame(train_log).to_csv(os.path.join(args.output_dir, "train_log.csv"), index=False)
-    print(f"\nTraining log saved to {os.path.join(args.output_dir, 'train_log.csv')}")
 
     return model
