@@ -8,14 +8,14 @@ from functools import partial
 from torch.utils.data import DataLoader, SequentialSampler
 
 def generate(model, tokenizer, dataloader, device,
-             generated_dir="./generated.csv", 
-             max_len=128,
-             num_beams=4, do_sample=False,
-             top_k=50, top_p=0.9, temperature=1.0):
+             generated_dir = "./generated.csv", 
+             max_len = 128,
+             num_beams = 4, do_sample = False,
+             top_k = 50, top_p = 0.9, temperature = 1.0):
     model.eval()
     model.to(device)
 
-    all_gen = []
+    all_src, all_gen = [], []
 
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Generating"):
@@ -23,22 +23,26 @@ def generate(model, tokenizer, dataloader, device,
             attention_mask = batch["attention_mask"].to(device)
 
             outputs = model.generate(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                max_length=max_len,
-                num_beams=num_beams,
-                do_sample=do_sample,
-                top_k=top_k,
-                top_p=top_p,
-                temperature=temperature,
+                input_ids = input_ids,
+                attention_mask = attention_mask,
+                max_length = max_len,
+                num_beams = num_beams,
+                do_sample = do_sample,
+                top_k = top_k,
+                top_p = top_p,
+                temperature = temperature,
             )
 
+            src_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
             gen_texts = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+
+            all_src.extend(src_texts)
             all_gen.extend(gen_texts)
 
-    dataloader.dataset.df["generated_text"] = all_gen
-
-    df = dataloader.dataset.df
+    df = pd.DataFrame({
+        "input_text": all_src,
+        "generated_text": all_gen
+    })
 
     if generated_dir.endswith(".xlsx"):
         df.to_excel(generated_dir, index=False)
