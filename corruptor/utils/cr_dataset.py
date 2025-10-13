@@ -52,15 +52,32 @@ class CRDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-    def create_src_tgt(self, claim, evidence, mask_ratio=0.3):
+    def create_src_tgt(self, claim, evidence, mask_ratio=0.5):
+        """
+        Tạo input/output ViT5-style từ một claim + evidence.
+        Span masking dài và liên tục để model học fill span.
+        
+        Args:
+            claim (str): câu gốc (claim đúng hoặc sai)
+            evidence (str): văn bản evidence đi kèm
+            mask_ratio (float): tỉ lệ token cần mask
+            max_span_len (int): độ dài tối đa của mỗi span
+
+        Returns:
+            src (str): masked claim + evidence
+            tgt (str): target spans (<extra_id_n> + tokens)
+        """
+
+        # --- 1. Tách token (word-level) ---
         max_span_len = 5
         tokens = claim.split()
         num_tokens = len(tokens)
         
+        # --- 2. Xác định số token cần mask ---
         mask_num = max(1, int(num_tokens * mask_ratio))
         mask_idxs = sorted(random.sample(range(num_tokens), mask_num))
         
-        # --- chia thành các span liên tục ---
+        # --- 3. Chia mask thành các span liên tục ---
         spans = []
         i = 0
         while i < len(mask_idxs):
@@ -68,24 +85,31 @@ class CRDataset(Dataset):
             span_len = random.randint(1, max_span_len)
             end = min(start + span_len, num_tokens)
             spans.append((start, end))
+            
+            # bỏ qua các index đã nằm trong span
             i += len([idx for idx in mask_idxs[i:] if start <= idx < end])
         
+        # --- 4. Tạo masked input và target ---
         masked_tokens = tokens.copy()
         tgt_tokens = []
         sentinel_id = 0
         
         for start, end in spans:
+            # thay span bằng <extra_id_n> trong input
             masked_tokens[start:end] = [f"<extra_id_{sentinel_id}>"]
+            # target gồm sentinel + token gốc
             tgt_tokens.append(f"<extra_id_{sentinel_id}>")
             tgt_tokens.extend(tokens[start:end])
             sentinel_id += 1
         
+        # --- 5. Ghép input + evidence ---
         masked_src = " ".join(masked_tokens)
         src = f"{masked_src} ||| {evidence}"
+        
+        # target
         tgt = " ".join(tgt_tokens)
         
         return src, tgt
-
 
     def __getitem__(self, idx):
         instance = self.data[idx]
