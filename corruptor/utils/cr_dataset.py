@@ -56,12 +56,18 @@ class CRDataset(Dataset):
         src = instance[self.src_column]
         evidence = instance[self.evidence_column]
 
-        masked_src = mask(src=src, evidence=evidence, tokenizer=self.tokenizer, mask_ratio=self.mask_ratio)
+        masked_src = mask(
+            src=src,
+            evidence=evidence,
+            tokenizer=self.tokenizer,
+            mask_ratio=self.mask_ratio
+        )
         instance["masked_src"] = masked_src
 
-        ans = "claim: " + masked_src + " evidence: " + evidence
+        ans = f"repair: claim: {masked_src} evidence: {evidence}"
 
         return ans
+
 
     def __getitem__(self, idx):
         instance = self.data[idx]
