@@ -38,16 +38,23 @@ class CRDataset(Dataset):
         else:
             self.data = data_source
 
-        if self.data[0][self.label_column] not in [0, 1, 2]:
-            for item in self.data:
-                raw_label = item[self.label_column]
-                if raw_label in self.label_map:
-                    item[self.label_column] = self.label_map[raw_label]
-                else:
-                    raise ValueError(f"Label {raw_label} không có trong label_map!")
+        filtered_data = []
 
-        df = df[df[self.label_column] == selected_label]
-        self.df = df
+        for item in self.data:
+            raw_label = item[self.label_column]
+
+            if raw_label in [0, 1, 2]:
+                mapped_label = raw_label
+            elif raw_label in self.label_map:
+                mapped_label = self.label_map[raw_label]
+            else:
+                raise ValueError(f"Label {raw_label} không có trong label_map!")
+
+            if mapped_label == selected_label:
+                item[self.label_column] = mapped_label
+                filtered_data.append(item)
+
+        self.data = filtered_data
 
     def __len__(self):
         return len(self.data)
