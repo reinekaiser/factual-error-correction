@@ -55,6 +55,12 @@ def get_parameter():
     parser.add_argument('--max_len', type=int, default=512, help='the max length of the text.')
     parser.add_argument("--output_dir", type=str, default=None, help="dir for model checkpoints, logs.")
     parser.add_argument("--generated_dir", type=str, help="dir to store generated text.")
+    parser.add_argument("--top_k", type=float, default=50)
+    parser.add_argument("--top_p", type=float, default=0.9)
+    parser.add_argument("--temperature", type=float, default=1.0)
+    parser.add_argument("--do_sample", default=True)
+    parser.add_argument("--num_beams", type=int, default=5)
+
     args = parser.parse_args()
 
     return args
