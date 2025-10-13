@@ -1,59 +1,48 @@
 import random
-
-import random
 import re
 
-import random, re
-
-def mask(src=None, evidence = None,tokenizer=None, mask_ratio=0.3):
+def mask(src=None, evidence=None, tokenizer=None, mask_ratio=0.15):
     """
-    Randomly masks a portion of the source text for T5/ViT5-style training.
-    - Works with SentencePiece tokenizers (ViT5, mT5, T5, etc.)
-    - Uses <extra_id_*> sentinel tokens for span corruption
+    ViT5-style span masking:
+    - Che một phần text không xuất hiện trong evidence
+    - Dùng sentinel tokens <extra_id_0>, <extra_id_1>, ...
+    - Hợp với tokenizer kiểu SentencePiece (ViT5/mT5/T5)
     """
     if not src:
         return ""
 
-    # Tokenize input
     src_tokens = tokenizer.tokenize(src)
-
-    # Không mask nếu quá ngắn
-    if len(src_tokens) < 5:
+    evidence_tokens = tokenizer.tokenize(evidence or "")
+    
+    lower_src = [t.lower() for t in src_tokens]
+    lower_evi = [t.lower() for t in evidence_tokens]
+    common = set(lower_src).intersection(lower_evi)
+    
+    mask_candidates = [i for i, w in enumerate(lower_src) if w not in common]
+    if not mask_candidates:
         return tokenizer.convert_tokens_to_string(src_tokens)
 
-    # Chọn ngẫu nhiên token để mask
-    num_to_mask = max(1, int(len(src_tokens) * mask_ratio))
-    mask_indices = sorted(random.sample(range(len(src_tokens)), num_to_mask))
-
-    # Gom các token liền kề thành span
-    spans = []
-    current = [mask_indices[0]]
-    for idx in mask_indices[1:]:
-        if idx == current[-1] + 1:
-            current.append(idx)
+    k = int(len(mask_candidates) * mask_ratio)
+    k = max(1, min(k, len(mask_candidates)))
+    
+    # --- Chia thành các span ---
+    num_spans = max(1, k // 3)  # ví dụ: mỗi span dài trung bình ~3 token
+    span_starts = sorted(random.sample(mask_candidates, num_spans))
+    
+    masked_tokens = []
+    current_id = 0
+    i = 0
+    while i < len(src_tokens):
+        if i in span_starts:
+            span_len = random.randint(1, 3)
+            masked_tokens.append(f"<extra_id_{current_id}>")
+            i += span_len
+            current_id += 1
         else:
-            spans.append(current)
-            current = [idx]
-    spans.append(current)
+            masked_tokens.append(src_tokens[i])
+            i += 1
 
-    # Giới hạn số span
-    spans = spans[:5]
-
-    masked_tokens = src_tokens.copy()
-    sentinel_id = 0
-
-    # Thay từng span bằng <extra_id_n>
-    for span in spans:
-        start, end = span[0], span[-1] + 1
-        masked_tokens[start:end] = [f"<extra_id_{sentinel_id}>"]
-        sentinel_id += 1
-
-    # Chuyển lại thành text
-    text = tokenizer.convert_tokens_to_string(masked_tokens)
-
-    # Xử lý trường hợp mask lặp
-    text = re.sub(r'(<extra_id_\d+>)(\s*\1)+', r'\1', text)
-
-    return text
+    masked_text = tokenizer.convert_tokens_to_string(masked_tokens)
+    return masked_text
 
 
