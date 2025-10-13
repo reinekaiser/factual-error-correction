@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import Dataset
 import os, sys
 import pandas as pd
+import random
 from .masker import mask
 LABEL_DICT = {"SUPPORTS":0, "REFUTES":1, "NOT ENOUGH INFO":2}
 
