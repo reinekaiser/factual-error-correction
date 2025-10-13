@@ -52,7 +52,7 @@ class CRDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-    def create_src_tgt(claim, evidence, mask_ratio=0.3):
+    def create_src_tgt(self, claim, evidence, mask_ratio=0.3):
         max_span_len = 5
         tokens = claim.split()
         num_tokens = len(tokens)
