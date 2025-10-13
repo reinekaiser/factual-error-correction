@@ -47,6 +47,7 @@ class CRDataset(Dataset):
                     raise ValueError(f"Label {raw_label} không có trong label_map!")
 
         df = df[df[self.label_column] == selected_label]
+        self.df = df
 
     def __len__(self):
         return len(self.data)
