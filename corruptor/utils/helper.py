@@ -72,7 +72,12 @@ def load_model(args):
     elif getattr(args, "do_eval", False) or getattr(args, "do_predict", False):
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         
-        if os.path.exists(os.path.join(model_path, "pytorch_model.bin")):
+        has_finetuned_weights = (
+            os.path.exists(os.path.join(model_path, "pytorch_model.bin"))
+            or os.path.exists(os.path.join(model_path, "model.safetensors"))
+        )
+
+        if has_finetuned_weights:
             model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
             print(f"Loaded fine-tuned ViT5 model from {model_path}")
         else:
