@@ -52,27 +52,46 @@ class CRDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-    def prepare_src(self, instance):
-        src = instance[self.src_column]
-        evidence = instance[self.evidence_column]
+    def create_src_tgt(self, claim, evidence, mask_ratio=0.3):
+        """
+        Tạo một ví dụ ViT5-style từ claim + evidence.
+        
+        Args:
+            claim (str): câu gốc (claim đúng)
+            evidence (str): văn bản evidence
+            mask_ratio (float): tỉ lệ từ cần mask (nếu specific_words=None)
+            
+        Returns:
+            src (str): masked claim + evidence
+            tgt (str): target spans (<extra_id_n> ...)
+        """
+        tokens = claim.split()
+        num_tokens = len(tokens)
 
-        masked_src = mask(
-            src=src,
-            evidence=evidence,
-            tokenizer=self.tokenizer,
-            mask_ratio=self.mask_ratio
-        )
-        instance["masked_src"] = masked_src
-
-        ans = f"repair: claim: {masked_src} evidence: {evidence}"
-
-        return ans
-
+        mask_num = max(1, int(num_tokens * mask_ratio))
+        mask_idxs = sorted(random.sample(range(num_tokens), mask_num))
+        
+        masked_tokens = tokens.copy()
+        tgt_tokens = []
+        sentinel_id = 0
+        
+        for idx in mask_idxs:
+            masked_tokens[idx] = f"<extra_id_{sentinel_id}>"
+            tgt_tokens.append(f"<extra_id_{sentinel_id}>")
+            tgt_tokens.append(tokens[idx])
+            sentinel_id += 1
+        
+        masked_src = " ".join(masked_tokens)
+        src = f"{masked_src} ||| {evidence}"
+        tgt = " ".join(tgt_tokens)
+        
+        return src, tgt
 
     def __getitem__(self, idx):
         instance = self.data[idx]
-        src = self.prepare_src(instance)
-        tgt = instance[self.evidence_column] if not self.is_inference else None
+        claim = instance[self.src_column]
+        evidence = instance[self.evidence_column]
+        src, tgt = self.create_src_tgt(claim, evidence, self.mask_ratio)
 
         src_encoding = self.tokenizer(
             src,
