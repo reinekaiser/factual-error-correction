@@ -31,6 +31,8 @@ def generate(model, tokenizer, dataloader, device,
                 top_k = top_k,
                 top_p = top_p,
                 temperature = temperature,
+                no_repeat_ngram_size=3,
+                repetition_penalty=1.8,
             )
 
             src_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
