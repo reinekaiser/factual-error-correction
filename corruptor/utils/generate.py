@@ -75,7 +75,7 @@ def predict(model, tokenizer, args):
     )
     
     return generate(
-        model, tokenizer, dataloader, args.device,
+        model, tokenizer, test_loader, args.device,
         generated_dir = args.generated_dir, 
         max_len = args.max_len,
         num_beams = args.num_beams, do_sample = args.do_sample,
