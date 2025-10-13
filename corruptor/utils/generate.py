@@ -7,6 +7,20 @@ from .helper import collate_fn
 from functools import partial
 from torch.utils.data import DataLoader, SequentialSampler
 
+def reconstruct(masked_input, generated_text):
+    """
+    Đố biết là cái gì
+    """
+    spans = re.split(r"<extra_id_\d+>", masked_input)
+    preds = re.findall(r"<extra_id_\d+>([^<]*)", generated_text)
+    
+    result = []
+    for i, span in enumerate(spans):
+        result.append(span)
+        if i < len(preds):
+            result.append(preds[i].strip())
+    return "".join(result).strip()
+
 def generate(model, tokenizer, dataloader, device,
              generated_dir = "./generated.csv", 
              max_len = 128,
@@ -36,7 +50,9 @@ def generate(model, tokenizer, dataloader, device,
             )
 
             src_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
-            gen_texts = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+            raw_gen_texts = tokenizer.batch_decode(outputs, skip_special_tokens=False)
+
+            gen_texts = [reconstruct(src, gen) for src, gen in zip(src_texts, raw_gen_texts)]
 
             all_src.extend(src_texts)
             all_gen.extend(gen_texts)
@@ -53,6 +69,7 @@ def generate(model, tokenizer, dataloader, device,
 
     print(f"\nSaved generated results to: {generated_dir}")
     return df
+
 
 def predict(model, tokenizer, args):
     test = CRDataset(

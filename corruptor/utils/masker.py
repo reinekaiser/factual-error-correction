@@ -44,5 +44,3 @@ def mask(src=None, evidence=None, tokenizer=None, mask_ratio=0.15):
 
     masked_text = tokenizer.convert_tokens_to_string(masked_tokens)
     return masked_text
-
-

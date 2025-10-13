@@ -20,7 +20,8 @@ def train(model, tokenizer, args):
         src_column = args.src_column,
         tgt_column = args.tgt_column,
         evidence_column = args.evidence_column,
-        label_column = args.label_column
+        label_column = args.label_column,
+        selected_label = args.selected_label
     )
 
     train_loader = DataLoader(
@@ -42,7 +43,8 @@ def train(model, tokenizer, args):
             tgt_column = args.tgt_column,
             evidence_column = args.evidence_column,
             label_column = args.label_column,
-            is_inference = False
+            is_inference = False,
+            selected_label = args.selected_label
         )
 
         dev_loader = DataLoader(
