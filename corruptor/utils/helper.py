@@ -83,7 +83,6 @@ def load_model(args):
         else:
             model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
             print(f"Loaded base ViT5 model (no fine-tuned weights found).")
-        print(model)
         model.to(device)
         return tokenizer, model
     else:

@@ -8,19 +8,31 @@ from .helper import collate_fn
 from functools import partial
 from torch.utils.data import DataLoader, SequentialSampler
 
-def reconstruct(masked_input, generated_text):
+def reconstruct(masked_input, generated_text, tokenizer):
     """
-    Đố biết là cái gì
+    Merge generated_text vào masked_input đúng vị trí <extra_id_n>
     """
-    spans = re.split(r"<extra_id_\d+>", masked_input)
-    preds = re.findall(r"<extra_id_\d+>([^<]*)", generated_text)
-    
-    result = []
-    for i, span in enumerate(spans):
-        result.append(span)
-        if i < len(preds):
-            result.append(preds[i].strip())
-    return "".join(result).strip()
+    input_tokens = tokenizer.tokenize(masked_input)
+    gen_tokens = tokenizer.tokenize(generated_text)
+
+    result_tokens = []
+    gen_idx = 0
+
+    i = 0
+    while i < len(input_tokens):
+        token = input_tokens[i]
+        if token.startswith("<extra_id_"):
+            fill_tokens = []
+            while gen_idx < len(gen_tokens) and not gen_tokens[gen_idx].startswith("<extra_id_"):
+                fill_tokens.append(gen_tokens[gen_idx])
+                gen_idx += 1
+            result_tokens.extend(fill_tokens)
+            i += 1
+        else:
+            result_tokens.append(token)
+            i += 1
+
+    return tokenizer.convert_tokens_to_string(result_tokens)
 
 def generate(model, tokenizer, dataloader, device,
              generated_dir = "./generated.csv", 
@@ -53,7 +65,7 @@ def generate(model, tokenizer, dataloader, device,
             src_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
             raw_gen_texts = tokenizer.batch_decode(outputs, skip_special_tokens=False)
 
-            gen_texts = [reconstruct(src, gen) for src, gen in zip(src_texts, raw_gen_texts)]
+            gen_texts = [reconstruct(src, gen, tokenizer) for src, gen in zip(src_texts, raw_gen_texts)]
 
             all_src.extend(src_texts)
             all_gen.extend(gen_texts)
