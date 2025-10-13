@@ -1,8 +1,8 @@
 import torch
 from torch.utils.data import Dataset
 import os, sys
-import pandas as pd
 import random
+import pandas as pd
 from .masker import mask
 LABEL_DICT = {"SUPPORTS":0, "REFUTES":1, "NOT ENOUGH INFO":2}
 
@@ -53,33 +53,32 @@ class CRDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-    def create_src_tgt(self, claim, evidence, mask_ratio=0.3):
-        """
-        Tạo một ví dụ ViT5-style từ claim + evidence.
-        
-        Args:
-            claim (str): câu gốc (claim đúng)
-            evidence (str): văn bản evidence
-            mask_ratio (float): tỉ lệ từ cần mask (nếu specific_words=None)
-            
-        Returns:
-            src (str): masked claim + evidence
-            tgt (str): target spans (<extra_id_n> ...)
-        """
+    def create_src_tgt(claim, evidence, mask_ratio=0.3):
+        max_span_len = 5
         tokens = claim.split()
         num_tokens = len(tokens)
-
+        
         mask_num = max(1, int(num_tokens * mask_ratio))
         mask_idxs = sorted(random.sample(range(num_tokens), mask_num))
+        
+        # --- chia thành các span liên tục ---
+        spans = []
+        i = 0
+        while i < len(mask_idxs):
+            start = mask_idxs[i]
+            span_len = random.randint(1, max_span_len)
+            end = min(start + span_len, num_tokens)
+            spans.append((start, end))
+            i += len([idx for idx in mask_idxs[i:] if start <= idx < end])
         
         masked_tokens = tokens.copy()
         tgt_tokens = []
         sentinel_id = 0
         
-        for idx in mask_idxs:
-            masked_tokens[idx] = f"<extra_id_{sentinel_id}>"
+        for start, end in spans:
+            masked_tokens[start:end] = [f"<extra_id_{sentinel_id}>"]
             tgt_tokens.append(f"<extra_id_{sentinel_id}>")
-            tgt_tokens.append(tokens[idx])
+            tgt_tokens.extend(tokens[start:end])
             sentinel_id += 1
         
         masked_src = " ".join(masked_tokens)
@@ -87,6 +86,7 @@ class CRDataset(Dataset):
         tgt = " ".join(tgt_tokens)
         
         return src, tgt
+
 
     def __getitem__(self, idx):
         instance = self.data[idx]
