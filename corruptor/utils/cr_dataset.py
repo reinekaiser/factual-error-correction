@@ -74,7 +74,7 @@ class CRDataset(Dataset):
     def __getitem__(self, idx):
         instance = self.data[idx]
         src = self.prepare_src(instance)
-        tgt = instance[self.evidence_column] if not self.is_inference else None
+        tgt = instance[self.tgt_column] if not self.is_inference else None
 
         src_encoding = self.tokenizer(
             src,
