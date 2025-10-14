@@ -60,21 +60,63 @@ class CRDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-    def prepare_src(self, instance):
-        src = instance[self.src_column]
-        evidence = instance[self.evidence_column]
-
-        masked_src = mask(src=src, evidence=evidence, tokenizer=self.tokenizer, mask_ratio=self.mask_ratio)
-        instance["masked_src"] = masked_src
-
-        ans = "Nhận định: " + masked_src + ". Bằng chứng: " + evidence
-
-        return ans
+    def mask(self, sentence, evidence):
+        """
+        Sinh cặp (source, target) bằng cách mask những từ xuất hiện trong evidence.
+        mask_ratio: tỉ lệ cụm mask được chọn trong tổng số cụm có thể.
+        max_masks: vẫn giữ để tránh tạo quá nhiều mask nếu câu dài.
+        """
+        max_masks = 5
+        mask_ratio = self.mask_ratio
+        s_words = sentence.split()
+        e_words = set(evidence.split())
+    
+        mask_positions = [i for i, w in enumerate(s_words) if w in e_words]
+        if not mask_positions:
+            return sentence, "<extra_id_0> <extra_id_1>"
+    
+        spans = []
+        start = mask_positions[0]
+        for i in range(1, len(mask_positions)):
+            if mask_positions[i] != mask_positions[i - 1] + 1:
+                spans.append((start, mask_positions[i - 1]))
+                start = mask_positions[i]
+        spans.append((start, mask_positions[-1]))
+    
+        num_to_mask = max(1, int(len(spans) * mask_ratio))
+        num_to_mask = min(num_to_mask, max_masks)
+        import random
+        spans = random.sample(spans, num_to_mask)
+    
+        spans.sort(key=lambda x: x[0])
+    
+        source_parts = []
+        target_parts = []
+        last_idx = 0
+        mask_id = 0
+    
+        for start, end in spans:
+            source_parts.extend(s_words[last_idx:start])
+            source_parts.append(f"<extra_id_{mask_id}>")
+            masked_span = " ".join(s_words[start:end+1])
+            target_parts.append(f"<extra_id_{mask_id}> {masked_span}")
+            mask_id += 1
+            last_idx = end + 1
+    
+        source_parts.extend(s_words[last_idx:])
+        target_parts.append(f"<extra_id_{mask_id}>")
+    
+        source = " ".join(source_parts)
+        target = " ".join(target_parts)
+    
+        return source, target
 
     def __getitem__(self, idx):
         instance = self.data[idx]
-        src = self.prepare_src(instance)
-        tgt = instance[self.tgt_column] if not self.is_inference else None
+        src = instance[self.src_column]
+        evidence = instance[self.evidence_column]
+        src, tgt = self.mask(src, evidence)
+        src = ans = "Nhận định: " + src + ". Bằng chứng: " + evidence
 
         src_encoding = self.tokenizer(
             src,
