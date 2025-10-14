@@ -56,7 +56,7 @@ def get_parameter():
     parser.add_argument("--output_dir", type=str, default=None, help="dir for model checkpoints, logs.")
     parser.add_argument("--generated_dir", type=str, help="dir to store generated text.")
     parser.add_argument("--selected_label", type=int, default = 0)
-    parser.add_argument("--top_k", type=float, default=50)
+    parser.add_argument("--top_k", type=int, default=50)
     parser.add_argument("--top_p", type=float, default=0.9)
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--do_sample", default=True)
