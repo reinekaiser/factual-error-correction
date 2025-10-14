@@ -2,37 +2,10 @@ from tqdm import tqdm
 import torch
 import pandas as pd
 import os
-import re
 from .cr_dataset import CRDataset
 from .helper import collate_fn
 from functools import partial
 from torch.utils.data import DataLoader, SequentialSampler
-
-def reconstruct(masked_input, generated_text, tokenizer):
-    """
-    Merge generated_text vào masked_input đúng vị trí <extra_id_n>
-    """
-    input_tokens = tokenizer.tokenize(masked_input)
-    gen_tokens = tokenizer.tokenize(generated_text)
-
-    result_tokens = []
-    gen_idx = 0
-
-    i = 0
-    while i < len(input_tokens):
-        token = input_tokens[i]
-        if token.startswith("<extra_id_"):
-            fill_tokens = []
-            while gen_idx < len(gen_tokens) and not gen_tokens[gen_idx].startswith("<extra_id_"):
-                fill_tokens.append(gen_tokens[gen_idx])
-                gen_idx += 1
-            result_tokens.extend(fill_tokens)
-            i += 1
-        else:
-            result_tokens.append(token)
-            i += 1
-
-    return tokenizer.convert_tokens_to_string(result_tokens)
 
 def generate(model, tokenizer, dataloader, device,
              generated_dir = "./generated.csv", 
@@ -58,14 +31,10 @@ def generate(model, tokenizer, dataloader, device,
                 top_k = top_k,
                 top_p = top_p,
                 temperature = temperature,
-                no_repeat_ngram_size=3,
-                repetition_penalty=1.8,
             )
 
-            src_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
-            raw_gen_texts = tokenizer.batch_decode(outputs, skip_special_tokens=False)
-
-            gen_texts = [reconstruct(src, gen, tokenizer) for src, gen in zip(src_texts, raw_gen_texts)]
+            src_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=False)
+            gen_texts = tokenizer.batch_decode(outputs, skip_special_tokens=False)
 
             all_src.extend(src_texts)
             all_gen.extend(gen_texts)
@@ -82,7 +51,6 @@ def generate(model, tokenizer, dataloader, device,
 
     print(f"\nSaved generated results to: {generated_dir}")
     return df
-
 
 def predict(model, tokenizer, args):
     test = CRDataset(
@@ -113,4 +81,3 @@ def predict(model, tokenizer, args):
         num_beams = args.num_beams, do_sample = args.do_sample,
         top_k = args.top_k, top_p = args.top_p, temperature = args.temperature
     )
-
