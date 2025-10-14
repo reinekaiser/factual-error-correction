@@ -23,14 +23,16 @@ def generate(model, tokenizer, dataloader, device,
             attention_mask = batch["attention_mask"].to(device)
 
             outputs = model.generate(
-                input_ids = input_ids,
-                attention_mask = attention_mask,
-                max_length = max_len,
-                num_beams = num_beams,
-                do_sample = do_sample,
-                top_k = top_k,
-                top_p = top_p,
-                temperature = temperature,
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                max_length=max_len,
+                num_beams=num_beams,
+                do_sample=do_sample,
+                top_k=top_k,
+                top_p=top_p,
+                temperature=temperature,
+                repetition_penalty=1.2,      
+                no_repeat_ngram_size=3       
             )
 
             src_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=False)
