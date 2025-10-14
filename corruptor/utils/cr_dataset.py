@@ -59,56 +59,51 @@ class CRDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
-
+    
     def mask(self, sentence, evidence):
         """
-        Sinh cặp (source, target) bằng cách mask những từ xuất hiện trong evidence.
-        mask_ratio: tỉ lệ cụm mask được chọn trong tổng số cụm có thể.
-        max_masks: vẫn giữ để tránh tạo quá nhiều mask nếu câu dài.
+            Sinh cặp (source, target) bằng cách mask những từ không xuất hiện trong evidence.
+            mask_ratio: tỉ lệ cụm mask được chọn trong tổng số cụm có thể.
+            max_masks: vẫn giữ để tránh tạo quá nhiều mask nếu câu dài.
         """
         max_masks = 5
         mask_ratio = self.mask_ratio
         s_words = sentence.split()
         e_words = set(evidence.split())
-    
-        mask_positions = [i for i, w in enumerate(s_words) if w in e_words]
-        if not mask_positions:
+        
+        non_evidence_positions = [i for i, w in enumerate(s_words) if w not in e_words]
+        if not non_evidence_positions:
             return sentence, "<extra_id_0> <extra_id_1>"
-    
+        
+        n_to_mask = max(1, int(len(non_evidence_positions) * mask_ratio))
+        chosen_positions = sorted(random.sample(non_evidence_positions, n_to_mask))
+        
         spans = []
-        start = mask_positions[0]
-        for i in range(1, len(mask_positions)):
-            if mask_positions[i] != mask_positions[i - 1] + 1:
-                spans.append((start, mask_positions[i - 1]))
-                start = mask_positions[i]
-        spans.append((start, mask_positions[-1]))
-    
-        num_to_mask = max(1, int(len(spans) * mask_ratio))
-        num_to_mask = min(num_to_mask, max_masks)
-        import random
-        spans = random.sample(spans, num_to_mask)
-    
-        spans.sort(key=lambda x: x[0])
-    
+        start = chosen_positions[0]
+        for i in range(1, len(chosen_positions)):
+            if chosen_positions[i] != chosen_positions[i - 1] + 1:
+                spans.append((start, chosen_positions[i - 1]))
+                start = chosen_positions[i]
+        spans.append((start, chosen_positions[-1]))
+
         source_parts = []
         target_parts = []
         last_idx = 0
         mask_id = 0
-    
+        
         for start, end in spans:
             source_parts.extend(s_words[last_idx:start])
             source_parts.append(f"<extra_id_{mask_id}>")
-            masked_span = " ".join(s_words[start:end+1])
+            masked_span = " ".join(s_words[start:end + 1])
             target_parts.append(f"<extra_id_{mask_id}> {masked_span}")
             mask_id += 1
             last_idx = end + 1
-    
+        
         source_parts.extend(s_words[last_idx:])
         target_parts.append(f"<extra_id_{mask_id}>")
-    
+        
         source = " ".join(source_parts)
         target = " ".join(target_parts)
-    
         return source, target
 
     def __getitem__(self, idx):
