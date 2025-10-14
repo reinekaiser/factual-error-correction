@@ -116,10 +116,10 @@ class CRDataset(Dataset):
         src = instance[self.src_column]
         evidence = instance[self.evidence_column]
         src, tgt = self.mask(src, evidence)
-        src = ans = "Nhận định: " + src + ". Bằng chứng: " + evidence
+        src = ans = "Nhận định: " + src + " Bằng chứng: " + evidence
 
         print(src)
-        print(target)
+        print(tgt)
 
         src_encoding = self.tokenizer(
             src,
