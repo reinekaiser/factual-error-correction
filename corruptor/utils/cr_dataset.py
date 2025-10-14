@@ -60,63 +60,75 @@ class CRDataset(Dataset):
     def __len__(self):
         return len(self.data)
     
-    def mask(self, sentence, evidence):
+    def mask(self, sentence, evidence, tokenizer):
         """
-        Sinh cặp (source, target) cho ViT5:
-          - Train mode: mask từ KHÔNG có trong evidence (để học cách điền đúng).
-          - Generate mode: mask từ CÓ trong evidence (để tạo câu mới khác).
+        Sinh cặp (source, target) theo kiểu ViT5:
+        - TRAIN MODE: mask những từ KHÁC / TRÁI NGHĨA so với evidence.
+        - GENERATE MODE: mask những từ GIỐNG / LIÊN QUAN trong evidence để tạo câu mới.
         """
-        max_masks = 7
         mask_ratio = self.mask_ratio
-        mode = "generate" if getattr(self, "is_inference", False) else "train"
-    
-        s_words = sentence.split()
-        e_words = set(evidence.split())
-    
-        if mode == "train":
-            positions = [i for i, w in enumerate(s_words) if w not in e_words]
-        else:
-            positions = [i for i, w in enumerate(s_words) if w in e_words]
-    
-        if not positions:
+        is_inference = self.is_inference
+        s_tokens = tokenizer.tokenize(sentence)
+        e_tokens = tokenizer.tokenize(evidence or "")
+
+        s_lower = [t.lower() for t in s_tokens]
+        e_lower = [t.lower() for t in e_tokens]
+
+        mask_positions = []
+
+        for i, tok in enumerate(s_lower):
+            antonyms = ANTONYM_PAIRS.get(tok, [])
+
+            if not is_inference:
+                if any(a in e_lower for a in antonyms):
+                    mask_positions.append(i)
+                elif tok not in e_lower and random.random() < mask_ratio:
+                    mask_positions.append(i)
+            else:
+                if tok in e_lower or any(a in s_lower for a in ANTONYM_PAIRS.get(tok, [])):
+                    if random.random() < (mask_ratio * 1.5):
+                        mask_positions.append(i)
+
+        if not mask_positions:
             return sentence, "<extra_id_0>"
-    
-        n_to_mask = min(max_masks, max(1, int(len(positions) * mask_ratio)))
-        chosen_positions = sorted(random.sample(positions, n_to_mask))
-    
+
         spans = []
-        start = chosen_positions[0]
-        for i in range(1, len(chosen_positions)):
-            if chosen_positions[i] != chosen_positions[i - 1] + 1:
-                spans.append((start, chosen_positions[i - 1]))
-                start = chosen_positions[i]
-        spans.append((start, chosen_positions[-1]))
-    
+        start = mask_positions[0]
+        for i in range(1, len(mask_positions)):
+            if mask_positions[i] != mask_positions[i - 1] + 1:
+                spans.append((start, mask_positions[i - 1]))
+                start = mask_positions[i]
+        spans.append((start, mask_positions[-1]))
+
         source_parts, target_parts = [], []
         last_idx, mask_id = 0, 0
         for start, end in spans:
-            source_parts.extend(s_words[last_idx:start])
+            source_parts.extend(s_tokens[last_idx:start])
             source_parts.append(f"<extra_id_{mask_id}>")
-    
-            masked_span = " ".join(s_words[start:end + 1])
+
+            masked_span = " ".join(s_tokens[start:end + 1])
             target_parts.append(f"<extra_id_{mask_id}> {masked_span}")
             last_idx = end + 1
             mask_id += 1
-    
-        source_parts.extend(s_words[last_idx:])
+
+        source_parts.extend(s_tokens[last_idx:])
         target_parts.append(f"<extra_id_{mask_id}>")
-    
-        source = " ".join(source_parts).strip()
-        target = " ".join(target_parts).strip()
-    
+
+        source = tokenizer.convert_tokens_to_string(source_parts)
+        target = tokenizer.convert_tokens_to_string(target_parts)
+
         return source, target
 
     def __getitem__(self, idx):
         instance = self.data[idx]
         src = instance[self.src_column]
         evidence = instance[self.evidence_column]
-        src, tgt = self.mask(src, evidence)
+        src, tgt = self.mask(src, evidence, self.tokenizer)
         src = ans = "Nhận định: " + src + " Bằng chứng: " + evidence
+
+        print(src)
+
+        print(tgt)
         
         src_encoding = self.tokenizer(
             src,
