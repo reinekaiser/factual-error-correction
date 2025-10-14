@@ -118,6 +118,9 @@ class CRDataset(Dataset):
         src, tgt = self.mask(src, evidence)
         src = ans = "Nhận định: " + src + ". Bằng chứng: " + evidence
 
+        print(src)
+        print(target)
+
         src_encoding = self.tokenizer(
             src,
             max_length=self.max_len,
