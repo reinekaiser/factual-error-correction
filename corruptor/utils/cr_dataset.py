@@ -6,7 +6,6 @@ import pandas as pd
 from .masker import mask
 LABEL_DICT = {"SUPPORTS":0, "REFUTES":1, "NOT ENOUGH INFO":2}
 ANTONYM_PAIRS = {
-    # --- tính chất, trạng thái ---
     "tốt": ["xấu", "kém", "tồi", "dở"],
     "xấu": ["đẹp", "tốt", "dễ nhìn"],
     "đẹp": ["xấu", "tệ", "kinh khủng"],
@@ -229,10 +228,6 @@ class CRDataset(Dataset):
         src, tgt = self.mask(src, evidence, self.tokenizer)
         src = ans = "Nhận định: " + src + " Bằng chứng: " + evidence
 
-        print(src)
-
-        print(tgt)
-        
         src_encoding = self.tokenizer(
             src,
             max_length=self.max_len,
