@@ -67,7 +67,7 @@ class CRDataset(Dataset):
         masked_src = mask(src=src, evidence=evidence, tokenizer=self.tokenizer, mask_ratio=self.mask_ratio)
         instance["masked_src"] = masked_src
 
-        ans = "claim: " + masked_src + " evidence: " + evidence
+        ans = masked_src + " ||| " + evidence
 
         return ans
 
