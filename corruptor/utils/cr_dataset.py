@@ -62,32 +62,30 @@ class CRDataset(Dataset):
     
     def mask(self, sentence, evidence):
         """
-            Sinh cặp (source, target) bằng cách mask những từ không xuất hiện trong evidence.
-            mask_ratio: tỉ lệ cụm mask được chọn trong tổng số cụm có thể.
-            max_masks: vẫn giữ để tránh tạo quá nhiều mask nếu câu dài.
+        Sinh cặp (source, target) cho ViT5:
+          - Train mode: mask từ KHÔNG có trong evidence (để học cách điền đúng).
+          - Generate mode: mask từ CÓ trong evidence (để tạo câu mới khác).
         """
-        max_masks = 5
+        max_masks = 7
         mask_ratio = self.mask_ratio
-        if self.is_inference:
-            mode = "generate"
-        else:
-            mode = "train"
+        mode = "generate" if getattr(self, "is_inference", False) else "train"
+    
         s_words = sentence.split()
         e_words = set(evidence.split())
-        
+    
         if mode == "train":
-            positions = [i for i, w in enumerate(s_words) if w not in e_words]  # khác
-        elif mode == "generate":
-            positions = [i for i, w in enumerate(s_words) if w in e_words]  # giống
+            positions = [i for i, w in enumerate(s_words) if w not in e_words]
         else:
-            raise ValueError("mode must be 'train' or 'generate'")
+            positions = [i for i, w in enumerate(s_words) if w in e_words]
     
         if not positions:
-            return sentence, "<extra_id_0> <extra_id_1>"
-        n_to_mask = max(1, int(len(positions) * mask_ratio))
+            return sentence, "<extra_id_0>"
+    
+        n_to_mask = min(max_masks, max(1, int(len(positions) * mask_ratio)))
         chosen_positions = sorted(random.sample(positions, n_to_mask))
     
-        spans, start = [], chosen_positions[0]
+        spans = []
+        start = chosen_positions[0]
         for i in range(1, len(chosen_positions)):
             if chosen_positions[i] != chosen_positions[i - 1] + 1:
                 spans.append((start, chosen_positions[i - 1]))
@@ -99,15 +97,19 @@ class CRDataset(Dataset):
         for start, end in spans:
             source_parts.extend(s_words[last_idx:start])
             source_parts.append(f"<extra_id_{mask_id}>")
+    
             masked_span = " ".join(s_words[start:end + 1])
             target_parts.append(f"<extra_id_{mask_id}> {masked_span}")
-            mask_id += 1
             last_idx = end + 1
+            mask_id += 1
     
         source_parts.extend(s_words[last_idx:])
         target_parts.append(f"<extra_id_{mask_id}>")
     
-        return " ".join(source_parts), " ".join(target_parts)
+        source = " ".join(source_parts).strip()
+        target = " ".join(target_parts).strip()
+    
+        return source, target
 
     def __getitem__(self, idx):
         instance = self.data[idx]
@@ -115,6 +117,9 @@ class CRDataset(Dataset):
         evidence = instance[self.evidence_column]
         src, tgt = self.mask(src, evidence)
         src = ans = "Nhận định: " + src + " Bằng chứng: " + evidence
+
+        print(src)
+        print(tgt)
         
         src_encoding = self.tokenizer(
             src,
