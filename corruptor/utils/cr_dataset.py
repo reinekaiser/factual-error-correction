@@ -68,29 +68,34 @@ class CRDataset(Dataset):
         """
         max_masks = 5
         mask_ratio = self.mask_ratio
+        if self.is_inference:
+            mode = "generate"
+        else:
+            mode = "train"
         s_words = sentence.split()
         e_words = set(evidence.split())
         
-        non_evidence_positions = [i for i, w in enumerate(s_words) if w not in e_words]
-        if not non_evidence_positions:
+        if mode == "train":
+            positions = [i for i, w in enumerate(s_words) if w not in e_words]  # khác
+        elif mode == "generate":
+            positions = [i for i, w in enumerate(s_words) if w in e_words]  # giống
+        else:
+            raise ValueError("mode must be 'train' or 'generate'")
+    
+        if not positions:
             return sentence, "<extra_id_0> <extra_id_1>"
-        
-        n_to_mask = max(1, int(len(non_evidence_positions) * mask_ratio))
-        chosen_positions = sorted(random.sample(non_evidence_positions, n_to_mask))
-        
-        spans = []
-        start = chosen_positions[0]
+        n_to_mask = max(1, int(len(positions) * mask_ratio))
+        chosen_positions = sorted(random.sample(positions, n_to_mask))
+    
+        spans, start = [], chosen_positions[0]
         for i in range(1, len(chosen_positions)):
             if chosen_positions[i] != chosen_positions[i - 1] + 1:
                 spans.append((start, chosen_positions[i - 1]))
                 start = chosen_positions[i]
         spans.append((start, chosen_positions[-1]))
-
-        source_parts = []
-        target_parts = []
-        last_idx = 0
-        mask_id = 0
-        
+    
+        source_parts, target_parts = [], []
+        last_idx, mask_id = 0, 0
         for start, end in spans:
             source_parts.extend(s_words[last_idx:start])
             source_parts.append(f"<extra_id_{mask_id}>")
@@ -98,13 +103,11 @@ class CRDataset(Dataset):
             target_parts.append(f"<extra_id_{mask_id}> {masked_span}")
             mask_id += 1
             last_idx = end + 1
-        
+    
         source_parts.extend(s_words[last_idx:])
         target_parts.append(f"<extra_id_{mask_id}>")
-        
-        source = " ".join(source_parts)
-        target = " ".join(target_parts)
-        return source, target
+    
+        return " ".join(source_parts), " ".join(target_parts)
 
     def __getitem__(self, idx):
         instance = self.data[idx]
