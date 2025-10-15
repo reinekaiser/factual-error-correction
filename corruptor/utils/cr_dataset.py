@@ -169,7 +169,7 @@ class CRDataset(Dataset):
         - GENERATE MODE: tương tự nhưng cho inference.
         """
         is_inference = self.is_inference
-        num_spans = 3
+        num_spans = 2 
         span_len = 6
 
         s_tokens = tokenizer.tokenize(sentence)
