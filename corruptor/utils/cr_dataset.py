@@ -192,10 +192,9 @@ class CRDataset(Dataset):
         for i, tok in enumerate(s_lower):
             antonyms = ANTONYM_PAIRS.get(tok, [])
             if not is_inference:
-                if any(a in e_lower for a in antonyms):
-                    candidates.append(i)
-                elif tok not in e_lower and random.random() < mask_ratio:
-                    candidates.append(i)
+                if tok not in e_lower and not any(a in e_lower for a in antonyms):
+                    if random.random() < mask_ratio:
+                        candidates.append(i)
             else:
                 if tok in e_lower or any(a in s_lower for a in antonyms):
                     candidates.append(i)
