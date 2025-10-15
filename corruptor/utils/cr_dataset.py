@@ -162,61 +162,10 @@ class CRDataset(Dataset):
     def __len__(self):
         return len(self.data)
     
-    def mask(self, sentence, evidence, tokenizer):
-        """
-        Sinh cặp (source, target) theo kiểu ViT5:
-        - TRAIN MODE: mask 3 span dài (6 token) từ sentence dựa trên evidence/antonym.
-        - GENERATE MODE: tương tự nhưng cho inference.
-        """
-        is_inference = self.is_inference
-        num_spans = 2 
-        span_len = 6
-
-        s_tokens = tokenizer.tokenize(sentence)
-        e_tokens = tokenizer.tokenize(evidence or "")
-
-        s_lower = [t.lower() for t in s_tokens]
-        e_lower = [t.lower() for t in e_tokens]
-
-        # --- Xác định candidates ---
-        candidates = []
-        for i, tok in enumerate(s_lower):
-            antonyms = ANTONYM_PAIRS.get(tok, [])
-            if tok not in e_lower and not any(a in e_lower for a in antonyms):
-                candidates.append(i)
-
-        if not candidates:
-            return sentence, "<extra_id_0>"
-
-        # --- Chọn span ---
-        chosen_starts = random.sample(candidates, min(num_spans, len(candidates)))
-        chosen_starts = sorted(chosen_starts)
-
-        source_parts = s_tokens.copy()
-        target_parts = []
-        mask_id = 0
-
-        for start in chosen_starts:
-            end = min(start + span_len, len(s_tokens))
-            source_parts[start:end] = [f"<extra_id_{mask_id}>"]
-            target_parts.append(f"<extra_id_{mask_id}> " + " ".join(s_tokens[start:end]))
-            mask_id += 1
-
-        # Thêm sentinel cuối cho target
-        target_parts.append(f"<extra_id_{mask_id}>")
-
-        source = tokenizer.convert_tokens_to_string(source_parts)
-        target = tokenizer.convert_tokens_to_string(target_parts)
-
-        return source, target
-
-
     def __getitem__(self, idx):
         instance = self.data[idx]
         src = instance[self.src_column]
-        evidence = instance[self.evidence_column]
-        src, tgt = self.mask(src, evidence, self.tokenizer)
-        src = ans = "Nhận định: " + src + " Bằng chứng: " + evidence
+        tgt = instance[self.tgt_column]
 
         src_encoding = self.tokenizer(
             src,
