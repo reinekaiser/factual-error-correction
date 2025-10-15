@@ -165,22 +165,12 @@ class CRDataset(Dataset):
     def mask(self, sentence, evidence, tokenizer):
         """
         Sinh cặp (source, target) theo kiểu ViT5:
-        - TRAIN MODE: mask 1 span dài (3–6 token) từ sentence dựa trên evidence/antonym.
+        - TRAIN MODE: mask 3 span dài (6 token) từ sentence dựa trên evidence/antonym.
         - GENERATE MODE: tương tự nhưng cho inference.
-        
-        Args:
-            sentence (str): câu gốc
-            evidence (str): văn bản evidence
-            tokenizer: tokenizer kiểu SentencePiece (ViT5/mT5/T5)
-
-        Returns:
-            source (str): câu có mask <extra_id_0>
-            target (str): các span mask <extra_id_0> ... <extra_id_n>
         """
-        mask_ratio = self.mask_ratio
-        min_span = 6
-        max_span = 10
         is_inference = self.is_inference
+        num_spans = 3
+        span_len = 6
 
         s_tokens = tokenizer.tokenize(sentence)
         e_tokens = tokenizer.tokenize(evidence or "")
@@ -188,13 +178,13 @@ class CRDataset(Dataset):
         s_lower = [t.lower() for t in s_tokens]
         e_lower = [t.lower() for t in e_tokens]
 
+        # --- Xác định candidates ---
         candidates = []
         for i, tok in enumerate(s_lower):
             antonyms = ANTONYM_PAIRS.get(tok, [])
             if not is_inference:
                 if tok not in e_lower and not any(a in e_lower for a in antonyms):
-                    if random.random() < mask_ratio:
-                        candidates.append(i)
+                    candidates.append(i)
             else:
                 if tok in e_lower or any(a in s_lower for a in antonyms):
                     candidates.append(i)
@@ -202,17 +192,28 @@ class CRDataset(Dataset):
         if not candidates:
             return sentence, "<extra_id_0>"
 
-        start = random.choice(candidates)
-        span_len = random.randint(min_span, max_span)
-        end = min(start + span_len, len(s_tokens))
+        # --- Chọn span ---
+        chosen_starts = random.sample(candidates, min(num_spans, len(candidates)))
+        chosen_starts = sorted(chosen_starts)
 
-        source_parts = s_tokens[:start] + [f"<extra_id_0>"] + s_tokens[end:]
-        target_parts = [f"<extra_id_0>"] + s_tokens[start:end] + [f"<extra_id_1>"]
+        source_parts = s_tokens.copy()
+        target_parts = []
+        mask_id = 0
+
+        for start in chosen_starts:
+            end = min(start + span_len, len(s_tokens))
+            source_parts[start:end] = [f"<extra_id_{mask_id}>"]
+            target_parts.append(f"<extra_id_{mask_id}> " + " ".join(s_tokens[start:end]))
+            mask_id += 1
+
+        # Thêm sentinel cuối cho target
+        target_parts.append(f"<extra_id_{mask_id}>")
 
         source = tokenizer.convert_tokens_to_string(source_parts)
         target = tokenizer.convert_tokens_to_string(target_parts)
 
         return source, target
+
 
     def __getitem__(self, idx):
         instance = self.data[idx]
