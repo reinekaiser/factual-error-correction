@@ -178,8 +178,8 @@ class CRDataset(Dataset):
             target (str): các span mask <extra_id_0> ... <extra_id_n>
         """
         mask_ratio = self.mask_ratio
-        min_span = 3
-        max_span = 6
+        min_span = 6
+        max_span = 10
         is_inference = self.is_inference
 
         s_tokens = tokenizer.tokenize(sentence)
