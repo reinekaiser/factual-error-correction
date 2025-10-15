@@ -35,8 +35,8 @@ def generate(model, tokenizer, dataloader, device,
                 no_repeat_ngram_size=3       
             )
 
-            src_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=False)
-            gen_texts = tokenizer.batch_decode(outputs, skip_special_tokens=False)
+            src_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
+            gen_texts = tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
             all_src.extend(src_texts)
             all_gen.extend(gen_texts)
