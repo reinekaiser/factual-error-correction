@@ -165,61 +165,49 @@ class CRDataset(Dataset):
     def mask(self, sentence, evidence, tokenizer):
         """
         Sinh cặp (source, target) theo kiểu ViT5:
-        - TRAIN MODE: mask những từ KHÁC / TRÁI NGHĨA so với evidence.
-        - GENERATE MODE: mask những từ GIỐNG / LIÊN QUAN trong evidence để tạo câu mới.
+        - TRAIN MODE: mask 1 span dài (3–6 token) từ sentence dựa trên evidence/antonym.
+        - GENERATE MODE: tương tự nhưng cho inference.
         """
+        max_span_len = 6
+        min_span_len = 3
         mask_ratio = self.mask_ratio
         is_inference = self.is_inference
+
         s_tokens = tokenizer.tokenize(sentence)
         e_tokens = tokenizer.tokenize(evidence or "")
 
         s_lower = [t.lower() for t in s_tokens]
         e_lower = [t.lower() for t in e_tokens]
 
-        mask_positions = []
-
+        # --- Lấy các vị trí có thể mask ---
+        candidates = []
         for i, tok in enumerate(s_lower):
             antonyms = ANTONYM_PAIRS.get(tok, [])
-
             if not is_inference:
                 if any(a in e_lower for a in antonyms):
-                    mask_positions.append(i)
+                    candidates.append(i)
                 elif tok not in e_lower and random.random() < mask_ratio:
-                    mask_positions.append(i)
+                    candidates.append(i)
             else:
                 if tok in e_lower or any(a in s_lower for a in ANTONYM_PAIRS.get(tok, [])):
-                    if random.random() < (mask_ratio * 1.5):
-                        mask_positions.append(i)
+                    candidates.append(i)
 
-        if not mask_positions:
+        if not candidates:
             return sentence, "<extra_id_0>"
 
-        spans = []
-        start = mask_positions[0]
-        for i in range(1, len(mask_positions)):
-            if mask_positions[i] != mask_positions[i - 1] + 1:
-                spans.append((start, mask_positions[i - 1]))
-                start = mask_positions[i]
-        spans.append((start, mask_positions[-1]))
+        # Chọn 1 span duy nhất
+        start = random.choice(candidates)
+        span_len = random.randint(min_span_len, max_span_len)
+        end = min(start + span_len, len(s_tokens))
 
-        source_parts, target_parts = [], []
-        last_idx, mask_id = 0, 0
-        for start, end in spans:
-            source_parts.extend(s_tokens[last_idx:start])
-            source_parts.append(f"<extra_id_{mask_id}>")
-
-            masked_span = " ".join(s_tokens[start:end + 1])
-            target_parts.append(f"<extra_id_{mask_id}> {masked_span}")
-            last_idx = end + 1
-            mask_id += 1
-
-        source_parts.extend(s_tokens[last_idx:])
-        target_parts.append(f"<extra_id_{mask_id}>")
+        # Tạo source và target
+        source_parts = s_tokens[:start] + [f"<extra_id_0>"] + s_tokens[end:]
+        target_parts = [f"<extra_id_0>"] + s_tokens[start:end] + [f"<extra_id_1>"]
 
         source = tokenizer.convert_tokens_to_string(source_parts)
         target = tokenizer.convert_tokens_to_string(target_parts)
 
-        return source, target
+        return source, target 
 
     def __getitem__(self, idx):
         instance = self.data[idx]
