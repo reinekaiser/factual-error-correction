@@ -162,7 +162,7 @@ class CRDataset(Dataset):
     def __len__(self):
         return len(self.data)
     
-    def mask_vit5(sentence, evidence, tokenizer):
+    def mask(self, sentence, evidence, tokenizer):
         """
         Sinh cặp (source, target) theo kiểu ViT5:
         - TRAIN MODE: mask 1 span dài (3–6 token) từ sentence dựa trên evidence/antonym.
