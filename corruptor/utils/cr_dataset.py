@@ -162,15 +162,24 @@ class CRDataset(Dataset):
     def __len__(self):
         return len(self.data)
     
-    def mask(self, sentence, evidence, tokenizer):
+    def mask_vit5(sentence, evidence, tokenizer):
         """
         Sinh cặp (source, target) theo kiểu ViT5:
         - TRAIN MODE: mask 1 span dài (3–6 token) từ sentence dựa trên evidence/antonym.
         - GENERATE MODE: tương tự nhưng cho inference.
+        
+        Args:
+            sentence (str): câu gốc
+            evidence (str): văn bản evidence
+            tokenizer: tokenizer kiểu SentencePiece (ViT5/mT5/T5)
+
+        Returns:
+            source (str): câu có mask <extra_id_0>
+            target (str): các span mask <extra_id_0> ... <extra_id_n>
         """
-        max_span_len = 6
-        min_span_len = 3
         mask_ratio = self.mask_ratio
+        min_span = 3
+        max_span = 6
         is_inference = self.is_inference
 
         s_tokens = tokenizer.tokenize(sentence)
@@ -179,7 +188,6 @@ class CRDataset(Dataset):
         s_lower = [t.lower() for t in s_tokens]
         e_lower = [t.lower() for t in e_tokens]
 
-        # --- Lấy các vị trí có thể mask ---
         candidates = []
         for i, tok in enumerate(s_lower):
             antonyms = ANTONYM_PAIRS.get(tok, [])
@@ -189,25 +197,23 @@ class CRDataset(Dataset):
                 elif tok not in e_lower and random.random() < mask_ratio:
                     candidates.append(i)
             else:
-                if tok in e_lower or any(a in s_lower for a in ANTONYM_PAIRS.get(tok, [])):
+                if tok in e_lower or any(a in s_lower for a in antonyms):
                     candidates.append(i)
 
         if not candidates:
             return sentence, "<extra_id_0>"
 
-        # Chọn 1 span duy nhất
         start = random.choice(candidates)
-        span_len = random.randint(min_span_len, max_span_len)
+        span_len = random.randint(min_span, max_span)
         end = min(start + span_len, len(s_tokens))
 
-        # Tạo source và target
         source_parts = s_tokens[:start] + [f"<extra_id_0>"] + s_tokens[end:]
         target_parts = [f"<extra_id_0>"] + s_tokens[start:end] + [f"<extra_id_1>"]
 
         source = tokenizer.convert_tokens_to_string(source_parts)
         target = tokenizer.convert_tokens_to_string(target_parts)
 
-        return source, target 
+        return source, target
 
     def __getitem__(self, idx):
         instance = self.data[idx]
