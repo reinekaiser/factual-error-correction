@@ -165,6 +165,8 @@ class CRDataset(Dataset):
     def __getitem__(self, idx):
         instance = self.data[idx]
         src = instance[self.src_column]
+        if self.is_inference:
+            src += " " + instance[self.evidence_column]
         tgt = instance[self.tgt_column]
 
         src_encoding = self.tokenizer(
