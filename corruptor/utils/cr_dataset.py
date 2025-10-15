@@ -182,12 +182,8 @@ class CRDataset(Dataset):
         candidates = []
         for i, tok in enumerate(s_lower):
             antonyms = ANTONYM_PAIRS.get(tok, [])
-            if not is_inference:
-                if tok not in e_lower and not any(a in e_lower for a in antonyms):
-                    candidates.append(i)
-            else:
-                if tok in e_lower or any(a in s_lower for a in antonyms):
-                    candidates.append(i)
+            if tok not in e_lower and not any(a in e_lower for a in antonyms):
+                candidates.append(i)
 
         if not candidates:
             return sentence, "<extra_id_0>"
