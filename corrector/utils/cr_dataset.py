@@ -59,7 +59,7 @@ class CRDataset(Dataset):
     
     def __getitem__(self, idx):
         instance = self.data[idx]
-        src = mask(instance[self.src_column], evidence, self.tokenizer, self.mask_ratio)
+        src = mask(instance[self.src_column], instance[self.evidence_column], self.tokenizer, self.mask_ratio)
         tgt = instance[self.tgt_column]
 
         src_encoding = self.tokenizer(
