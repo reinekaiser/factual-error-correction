@@ -2,10 +2,12 @@ import random
 import re
 import math
 
+import random
+
 def mask(src=None, evidence=None, tokenizer=None, mask_ratio=0.15):
     """
-    ViT5-style span masking:
-    - Che ngẫu nhiên một số span trong `src` (ưu tiên phần không trùng với evidence)
+    ViT5-style span masking (safe version)
+    - Che ngẫu nhiên một số span trong `src`
     - Dùng sentinel tokens <extra_id_0>, <extra_id_1>, ...
     - Hợp với tokenizer kiểu SentencePiece (T5/mT5/Flan-T5)
     """
@@ -32,15 +34,22 @@ def mask(src=None, evidence=None, tokenizer=None, mask_ratio=0.15):
     masked_tokens = []
     current_id = 0
     i = 0
-    while i < len(src_tokens):
-        if i in span_starts:
+    n = len(src_tokens)
+    used_starts = set(span_starts)
+
+    while i < n:
+        if i in used_starts:
             span_len = random.randint(1, 3)
             masked_tokens.append(f"<extra_id_{current_id}>")
-            i += span_len
             current_id += 1
+            i = min(i + span_len, n)  # đảm bảo không vượt giới hạn
         else:
             masked_tokens.append(src_tokens[i])
             i += 1
+
+        if len(masked_tokens) > n * 3:
+            print("Loop protection triggered")
+            break
 
     masked_text = tokenizer.convert_tokens_to_string(masked_tokens)
     return masked_text
