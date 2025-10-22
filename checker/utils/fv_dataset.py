@@ -27,7 +27,7 @@ class FVDataset(Dataset):
                 df = pd.read_json(data_source)
             elif data_source.endswith('.parquet'):
                 df = pd.read_parquet(data_source)
-            elif data_source.endswith('.csv'):
+            elif data_source.endswith('.csv') or data_source.endswith('.txt'):
                 df = pd.read_csv(data_source)
             self.data = df.to_dict(orient = 'records')
         else:
