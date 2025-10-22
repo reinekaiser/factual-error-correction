@@ -64,7 +64,6 @@ def predict(model, tokenizer, args):
         tgt_column = args.tgt_column,
         evidence_column = args.evidence_column,
         label_column = args.label_column,
-        selected_label = args.selected_label,
         is_inference = True
     )
 

@@ -21,7 +21,6 @@ def train(model, tokenizer, args):
         tgt_column = args.tgt_column,
         evidence_column = args.evidence_column,
         label_column = args.label_column,
-        selected_label = args.selected_label
     )
 
     train_loader = DataLoader(
@@ -44,7 +43,6 @@ def train(model, tokenizer, args):
             evidence_column = args.evidence_column,
             label_column = args.label_column,
             is_inference = False,
-            selected_label = args.selected_label
         )
 
         dev_loader = DataLoader(
