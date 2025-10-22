@@ -40,7 +40,7 @@ def mask(src=None, evidence=None, tokenizer=None, mask_ratio=0.15):
     while i < n:
         if i in used_starts:
             span_len = random.randint(1, 3)
-            masked_tokens.append(f"*")
+            masked_tokens.append(f" *")
             current_id += 1
             i = min(i + span_len, n)
         else:
