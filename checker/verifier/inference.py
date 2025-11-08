@@ -4,6 +4,8 @@ from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampl
 from tqdm import tqdm
 from checker.utils.fv_dataset import FVDataset
 from checker.utils.helper import fv_collate_fn
+import csv
+import os
 
 def filter(
     model,
