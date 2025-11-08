@@ -66,7 +66,8 @@ def evaluate(model, tokenizer, args):
     dataset = FVDataset(
         args.dev_file, 
         tokenizer, 
-        max_len=args.max_len, 
+        max_len=args.max_len,
+        claim_column=args.mutated_col 
     )
 
     sampler = SequentialSampler(dataset)
