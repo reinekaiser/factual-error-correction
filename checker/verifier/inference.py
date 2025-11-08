@@ -62,7 +62,7 @@ def filter(
     model.train()
     return filtered_samples
 
-def evaluate(model, tokenizer, args):
+def inference(model, tokenizer, args):
     dataset = FVDataset(
         args.dev_file, 
         tokenizer, 
