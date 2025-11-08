@@ -119,6 +119,8 @@ def get_parameter():
     parser = argparse.ArgumentParser(description="Factual Error Correction.")
     parser.add_argument('--do_train', action='store_true', help='Whether to run training.')
     parser.add_argument('--do_eval', action='store_true', help='Whether to run eval on the dev/test set.')
+    parser.add_argument('-do_inference', action='store_true',help='Filter specified value')
+    parser.add_argument('-inference_label', type=int, default=0, help='Filter label')
     parser.add_argument('--device', type = str, default = 'cuda:0')
     parser.add_argument('--random_state', type = int, default = 12)
     parser.add_argument('--dataset', type=str, help='the path of fact verification data.')
@@ -141,6 +143,7 @@ def get_parameter():
     parser.add_argument('--save_steps', type=int, default = 10, help='Save checkpoint every X updates steps.')
     parser.add_argument('--tensorboard_dir', type=str, default="../tensorboard_log", help="Tensorboard log dir.")
     parser.add_argument("--output_dir", type=str, default=None, help="dir for model checkpoints, logs and generated text.")
+    parser.add_argument("--filter_output", type=str, default=None, help="dir for filtered text")
     parser.add_argument('--resume', action='store_true', help='whether load the best checkpoint or not.')
     args = parser.parse_args()
 
@@ -172,6 +175,10 @@ def main():
     if args.do_eval:
         logger.info("*** Evaluate ***") 
         evaluate(model, tokenizer, args)
+
+    if args.do_inference:
+        logger.info("*** Inference ***")
+        inference(mode, tokenizer, args)
 
 if __name__ == "__main__":
     main()
