@@ -178,7 +178,7 @@ def main():
 
     if args.do_inference:
         logger.info("*** Inference ***")
-        inference(mode, tokenizer, args)
+        inference(model, tokenizer, args)
 
 if __name__ == "__main__":
     main()
