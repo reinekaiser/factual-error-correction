@@ -148,8 +148,6 @@ def get_parameter():
     parser.add_argument('--resume', action='store_true', help='whether load the best checkpoint or not.')
     args = parser.parse_args()
 
-    assert args.do_train + args.do_eval == 1, print('Specify do_train or do_eval.')
-
     if args.resume:
         print(args.model_name)
         assert os.path.exists(args.model_name), print('Please provide the checkpoint.')
