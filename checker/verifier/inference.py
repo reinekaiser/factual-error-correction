@@ -13,8 +13,9 @@ def filter(
     device,
     expected_label,
     tokenizer=None,
-    output_csv="filtered.csv"
-):
+    output_csv="filtered.csv",
+    min_confidence=0.6
+    ):
     model.eval()
     filtered_samples = []
 
@@ -31,12 +32,13 @@ def filter(
 
             probs = F.softmax(logits, dim=1)
             preds = torch.argmax(probs, dim=1)
+            pred_conf = probs[torch.arange(len(preds)), preds]
 
-            mask = (preds != expected_label)
+            mask = (preds != expected_label) | (pred_conf < min_confidence)
             if mask.any():
                 input_ids = batch['input_ids'][mask]
                 pred_labels = preds[mask]
-                confidence = probs[mask, pred_labels]
+                confidence = pred_conf[mask]
                 idxs = [indices[i].item() for i in mask.nonzero(as_tuple=True)[0]]
 
                 if tokenizer:
@@ -57,9 +59,9 @@ def filter(
             writer = csv.DictWriter(f, fieldnames=["index", "text", "pred_label", "confidence"])
             writer.writeheader()
             writer.writerows(filtered_samples)
-        print(f"[Info] Saved {len(filtered_samples)} samples (pred != {expected_label}) to {output_csv}")
+        print(f"[Info] Saved {len(filtered_samples)} samples to {output_csv}")
     else:
-        print(f"[Info] No samples found where pred != {expected_label}.")
+        print(f"[Info] No samples matched filter criteria.")
 
     model.train()
     return filtered_samples
