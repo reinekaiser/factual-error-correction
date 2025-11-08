@@ -63,7 +63,7 @@ def load_model(args):
         model = MeanMaxPoolingModel(model_name = args.model_name, num_labels=3)
         model.to(args.device)
         return tokenizer, model
-    elif "do_train" not in args or ("do_eval" in args and args.do_eval):
+    elif "do_train" not in args or ("do_eval" in args and args.do_eval) or ("do_inference" in args and args.do_inference):
         tokenizer = AutoTokenizer.from_pretrained(args.model_name)
         from transformers import T5EncoderModel
         model = MeanMaxPoolingModel.__new__(MeanMaxPoolingModel)
