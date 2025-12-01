@@ -1,0 +1,6 @@
+trafilatura
+fastapi
+uvicorn
+underthesea
+transformers
+torch
