@@ -15,8 +15,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     crawler = AsyncNewsCrawler()
-    predictor = Seq2SeqPredictor(args.model_path)
-    retriver = SentenceRetriever(args.sbert_path)
+    predictor = Seq2SeqPredictor(model_name_or_path=args.model_path)
+    retriver = SentenceRetriever(model_name=args.sbert_path)
 
     app = FastAPI()
 
