@@ -1,7 +1,7 @@
 import httpx
 import trafilatura
 
-class AsyncNewsCrawler:
+class NewsCrawler:
     def __init__(self):
         pass
 
