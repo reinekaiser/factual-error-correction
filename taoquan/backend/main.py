@@ -66,7 +66,7 @@ if __name__ == "__main__":
         if evidence and len(evidence.split(".")) > 10:
             top_sentences, _ = retriver(text, evidence, top_k = 10)
             evidence = top_sentences.join(".")
-        result = await predictor.generate_single_async(text, evidence)
+        result = await predictor.generate_single(text, evidence)
         return {"text": text, "generated": result}
 
     public_url = ngrok.connect(8000)
