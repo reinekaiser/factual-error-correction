@@ -43,7 +43,7 @@ if __name__ == "__main__":
         """
         Lấy danh sách URL từ file links.txt theo page & chunk_size
         """
-        urls = read_links_from_file("links.txt")
+        urls = read_links_from_file(file_path=args.news_links)
         total_urls = len(urls)
 
         start = (page - 1) * chunk_size
