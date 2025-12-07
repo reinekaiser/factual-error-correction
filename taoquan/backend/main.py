@@ -1,5 +1,5 @@
 from pyngrok import ngrok
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 import uvicorn
 import os
 from taoquan.utils.crawler import AsyncNewsCrawler
