@@ -1,14 +1,11 @@
 import httpx
 import trafilatura
 
-class NewsCrawler:
+class AsyncNewsCrawler:
     def __init__(self):
         pass
 
     def crawl_single(self, url: str) -> dict:
-        """
-        Crawl 1 bài báo từ URL (sync) chỉ dùng Trafilatura
-        """
         try:
             with httpx.Client(timeout=15) as client:
                 r = client.get(url)
@@ -20,13 +17,18 @@ class NewsCrawler:
                 include_tables=False,
                 output_format='txt'
             )
+
             meta = trafilatura.extract_metadata(html)
+
+            title = meta.title if meta and hasattr(meta, "title") else ""
+            author = meta.author if meta and hasattr(meta, "author") else ""
+            date = meta.date if meta and hasattr(meta, "date") else ""
 
             return {
                 "url": url,
-                "title": meta.get("title") if meta else "",
-                "author": meta.get("authors") if meta else "",
-                "publish_date": meta.get("date") if meta else "",
+                "title": title,
+                "author": author,
+                "publish_date": date,
                 "content": text if text else "",
                 "error": None if text else "No content extracted"
             }
