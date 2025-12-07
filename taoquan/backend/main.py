@@ -75,7 +75,7 @@ if __name__ == "__main__":
     def get_inference(text: str, evidence=None):
         if evidence and len(evidence.split(".")) > 10:
             top_sentences, _ = retriver.retrieve_evidence(text, evidence, top_k = 10)
-            evidence = top_sentences.join(".")
+            evidence = ".".join(top_sentences)
         result = predictor.generate_single(text, evidence)
         return {"text": text, "generated": result}
 
