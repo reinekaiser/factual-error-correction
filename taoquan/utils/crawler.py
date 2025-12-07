@@ -18,7 +18,7 @@ class NewsCrawler:
                 html,
                 include_comments=False,
                 include_tables=False,
-                output_format='text'
+                output_format='txt'
             )
             meta = trafilatura.extract_metadata(html)
 
