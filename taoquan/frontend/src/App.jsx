@@ -166,10 +166,11 @@ export default function App() {
             />
 
             {inference && (
-              <pre className="mt-4 bg-white p-4 rounded-lg text-sm text-blue-800 overflow-x-auto whitespace-pre-wrap shadow-inner border border-blue-100">
-                {JSON.stringify(inference, null, 2)}
+              <pre className="mt-4 bg-white p-4 rounded-lg text-base text-blue-800 overflow-x-auto whitespace-pre-wrap shadow-inner border border-blue-100">
+                {JSON.stringify(inference.generated, null, 2)}
               </pre>
             )}
+
           </div>
         </main>
       </div>
