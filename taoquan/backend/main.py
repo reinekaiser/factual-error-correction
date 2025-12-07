@@ -1,6 +1,7 @@
 from pyngrok import ngrok
 from fastapi import FastAPI, Query
 import uvicorn
+import threading
 import os
 from taoquan.utils.crawler import AsyncNewsCrawler
 from taoquan.utils.inference_model import Seq2SeqPredictor
@@ -71,7 +72,11 @@ if __name__ == "__main__":
     public_url = ngrok.connect(8000)
     print("Public URL:", public_url)
 
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    def run_app():
+        uvicorn.run("app:app", host="0.0.0.0", port=8000)
+
+    thread = threading.Thread(target=run_app)
+    thread.start()
 
 
 
