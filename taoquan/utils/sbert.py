@@ -20,6 +20,9 @@ class SentenceRetriever:
         )
 
     def retrieve_evidence(self, claim: str, context: list[str], top_k: int = 5):
+        if not isinstance(context, list):
+            context = [context] if context is not None else []
+
         sentences = [claim] + context
         encoded = self.tokenizer(sentences, padding=True, truncation=True, return_tensors='pt').to(self.device)
 

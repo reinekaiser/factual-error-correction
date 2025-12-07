@@ -79,13 +79,13 @@ export default function App() {
       </header>
 
       {/* Body: Sidebar + Main */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <aside className="w-72 bg-white border-r border-blue-200 shadow-md flex flex-col">
           <h2 className="text-xl font-semibold p-4 border-b border-blue-200 bg-blue-100 text-blue-800">
             Danh sách bài báo
           </h2>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {urls.length === 0 && (
               <p className="p-4 text-blue-400">Đang tải danh sách...</p>
             )}
@@ -136,9 +136,9 @@ export default function App() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col p-6">
-          {/* Article */}
-          <div className="flex-1 w-full overflow-y-auto bg-white shadow-inner rounded-t-lg p-6">
+        <main className="flex-1 flex flex-col min-h-0">
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto bg-white p-6 shadow-inner rounded-t-lg min-h-0">
             {article ? (
               <>
                 <h1 className="text-3xl font-bold mb-4 text-blue-800">
@@ -156,7 +156,7 @@ export default function App() {
           </div>
 
           {/* Claim input */}
-          <div className="w-full p-4 border-t bg-blue-50 flex flex-col">
+          <div className="w-full p-4 border-t bg-blue-50 flex-shrink-0">
             <input
               value={claim}
               onChange={(e) => setClaim(e.target.value)}
@@ -174,6 +174,7 @@ export default function App() {
         </main>
       </div>
     </div>
+
 
   );
 }
