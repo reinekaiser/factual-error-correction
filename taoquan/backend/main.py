@@ -4,7 +4,7 @@ from pathlib import Path
 import uvicorn
 import threading
 import os
-from taoquan.utils.crawler import AsyncNewsCrawler
+from taoquan.utils.crawler import NewsCrawler
 from taoquan.utils.inference_model import Seq2SeqPredictor
 from taoquan.utils.sbert import SentenceRetriever
 import argparse
@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    crawler = AsyncNewsCrawler()
+    crawler = NewsCrawler()
     predictor = Seq2SeqPredictor(model_name_or_path=args.model_path)
     retriver = SentenceRetriever(model_name=args.sbert_path)
 
