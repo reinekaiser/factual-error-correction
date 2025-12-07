@@ -4,3 +4,5 @@ uvicorn
 underthesea
 transformers
 torch
+pyvi
+nltk
