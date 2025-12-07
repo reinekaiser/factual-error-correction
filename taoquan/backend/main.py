@@ -73,7 +73,7 @@ if __name__ == "__main__":
     print("Public URL:", public_url)
 
     def run_app():
-        uvicorn.run("app:app", host="0.0.0.0", port=8000)
+        uvicorn.run(app, host="0.0.0.0", port=8000)
 
     thread = threading.Thread(target=run_app)
     thread.start()
