@@ -11,6 +11,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path", type=str, help="Đường dẫn tới model")
     parser.add_argument("--sbert_path", type=str, help="Đường dẫn tới sbert model")
+    parser.add_argument("--news_links", type=str, help="Đường dẫn tới news links")
 
     args = parser.parse_args()
 
@@ -24,7 +25,7 @@ if __name__ == "__main__":
     def root():
         return {"message": "Táo quân 2025"}
 
-    def read_links_from_file(file_path: str = "links.txt") -> List[str]:
+    def read_links_from_file(file_path = args.news_links):
         path = Path(file_path)
         if not path.exists():
             return []
