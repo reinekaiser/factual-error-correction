@@ -74,6 +74,7 @@ if __name__ == "__main__":
     @app.get("/news/inference")
     def get_inference(text: str, evidence=None):
         if evidence and len(evidence.split(".")) > 5:
+            evidence = evidence.split(".")
             top_sentences, _ = retriver.retrieve_evidence(text, evidence, top_k = 5)
             print(top_sentences)
             evidence = ".".join(top_sentences)
