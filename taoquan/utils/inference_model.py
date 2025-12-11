@@ -28,7 +28,7 @@ class Seq2SeqPredictor:
     def word_segment(self, text):
         return word_tokenize(text, format="text")
 
-    def mask(self, src_text, evidence=None, mask_token="*", mask_ratio=0.15, mask_strategy='random', merge_mask=False):
+    def mask(self, src_text, evidence=None, mask_token="*", mask_ratio=0.15, mask_strategy='heuristic', merge_mask=False):
         src_tokens = word_tokenize(src_text, format="text").split()
         evidence_tokens = word_tokenize(evidence, format="text").split() if evidence else []
 
