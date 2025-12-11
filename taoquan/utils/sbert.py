@@ -41,4 +41,6 @@ class SentenceRetriever:
         top_sentences = [s for s, _ in ranked[:top_k]]
         top_scores = [v for _, v in ranked[:top_k]]
 
+        print(top_sentences)
+
         return top_sentences, top_scores

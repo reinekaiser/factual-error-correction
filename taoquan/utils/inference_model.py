@@ -45,7 +45,6 @@ class Seq2SeqPredictor:
                 if w not in common:
                     src_tokens[i] = mask_token
 
-            print(src_tokens)
         else:
             raise ValueError("Invalid mask strategy")
 
@@ -62,7 +61,10 @@ class Seq2SeqPredictor:
                     prev_masked = False
             src_tokens = new_tokens
 
-        return " ".join(src_tokens)
+        src_tokens = " ".join(src_tokens)
+        src_tokens = src_tokens.replace("_", " ")
+
+        return src_tokens
 
     def prepare_input(self, src_text, evidence=None, use_evidence=True):
         """
@@ -80,7 +82,6 @@ class Seq2SeqPredictor:
         """
         self.model.eval()
         input_text = self.prepare_input(src_text, evidence, use_evidence)
-        print(input_text)
         inputs = self.tokenizer.encode(input_text, max_length=self.max_src_len, truncation=True, return_tensors="pt").to(self.device)
 
         with torch.no_grad():
