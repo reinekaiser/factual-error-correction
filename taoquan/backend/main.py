@@ -77,7 +77,6 @@ if __name__ == "__main__":
             evidence = evidence.replace("\n", "")
             evidence = evidence.split(".")
             top_sentences, _ = retriver.retrieve_evidence(text, evidence, top_k = 5)
-            print(top_sentences)
             evidence = ".".join(top_sentences)
         result = predictor.generate_single(text, evidence)
         return {"text": text, "generated": result}
