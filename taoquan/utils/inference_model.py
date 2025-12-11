@@ -44,6 +44,8 @@ class Seq2SeqPredictor:
             for i, w in enumerate(lower_src_tokens):
                 if w not in common:
                     src_tokens[i] = mask_token
+
+            print(src_tokens)
         else:
             raise ValueError("Invalid mask strategy")
 
