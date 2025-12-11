@@ -78,6 +78,7 @@ class Seq2SeqPredictor:
         """
         self.model.eval()
         input_text = self.prepare_input(src_text, evidence, use_evidence)
+        print(input_text)
         inputs = self.tokenizer.encode(input_text, max_length=self.max_src_len, truncation=True, return_tensors="pt").to(self.device)
 
         with torch.no_grad():
