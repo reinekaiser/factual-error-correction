@@ -80,15 +80,41 @@ class Seq2SeqPredictor:
 
     def generate_single(self, src_text, evidence=None, use_evidence=True):
         """
-        Generate output cho 1 sample (sync)
+        Generate output cho 1 sample, theo đúng format dataset
         """
         self.model.eval()
+
         input_text = self.prepare_input(src_text, evidence, use_evidence)
-        inputs = self.tokenizer.encode(input_text, max_length=self.max_src_len, truncation=True, return_tensors="pt").to(self.device)
+
+        src_tokenization = torch.tensor(
+            self.tokenizer.encode(
+                input_text,
+                max_length=self.max_src_len,
+                truncation=True,
+                padding=False,
+                add_special_tokens=True
+            ),
+            dtype=torch.long
+        )
+
+        _mask = torch.nn.utils.rnn.pad_sequence([src_tokenization], batch_first=True, padding_value=-100)
+
+        attention_mask = torch.zeros(_mask.shape, dtype=torch.float32)
+        attention_mask = attention_mask.masked_fill(_mask != -100, 1)
+
+        encoder_inputs = torch.nn.utils.rnn.pad_sequence(
+            [src_tokenization],
+            batch_first=True,
+            padding_value=self.tokenizer.pad_token_id
+        )
+
+        encoder_inputs = encoder_inputs.to(self.device)
+        attention_mask = attention_mask.to(self.device)
 
         with torch.no_grad():
             outputs = self.model.generate(
-                input_ids=inputs,
+                input_ids=encoder_inputs,
+                attention_mask=attention_mask,
                 max_length=self.max_tgt_len,
                 num_beams=self.num_beams,
                 do_sample=self.do_sample,
@@ -97,6 +123,7 @@ class Seq2SeqPredictor:
                 repetition_penalty=self.repetition_penalty,
                 temperature=self.temperature
             )
+
         decoded = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return decoded
 

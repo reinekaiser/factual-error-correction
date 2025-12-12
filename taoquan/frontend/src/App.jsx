@@ -9,6 +9,7 @@ export default function App() {
   const [content, setContent] = useState("");
   const [claim, setClaim] = useState("");
   const [inference, setInference] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(1);
   const [chunkSize] = useState(10);
@@ -27,8 +28,9 @@ export default function App() {
         { headers: { "ngrok-skip-browser-warning": "true" } }
       );
       const data = await res.json();
-      setUrls(data.urls || []);
-      setTotalUrls(data.total_urls || 0);
+
+      setUrls(data.data || []);
+      setTotalUrls(data.total_items || 0);
       setPage(pageNumber);
     } catch (err) {
       console.error("Error loading list:", err);
@@ -53,6 +55,8 @@ export default function App() {
   async function sendInference() {
     if (!claim.trim()) return;
 
+    setLoading(true);
+
     try {
       const res = await fetch(
         `${BASE_URL}/news/inference?text=${encodeURIComponent(
@@ -65,20 +69,16 @@ export default function App() {
     } catch (err) {
       console.error("Error sending inference:", err);
     }
-  }
 
-  function handleKey(e) {
-    if (e.key === "Enter") sendInference();
+    setLoading(false);
   }
 
   return (
     <div className="h-screen flex flex-col font-sans text-gray-800 bg-blue-50">
-      {/* Header */}
       <header className="w-full bg-blue-600 text-white p-4 text-2xl font-bold shadow-md">
         Táo quân 2025
       </header>
 
-      {/* Body: Sidebar + Main */}
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <aside className="w-72 bg-white border-r border-blue-200 shadow-md flex flex-col">
@@ -89,14 +89,14 @@ export default function App() {
             {urls.length === 0 && (
               <p className="p-4 text-blue-400">Đang tải danh sách...</p>
             )}
-            {urls.map((u, idx) => (
+            {urls.map((item, idx) => (
               <div
                 key={idx}
-                onClick={() => loadArticle(u)}
+                onClick={() => loadArticle(item.url)}
                 className="p-3 border-b border-blue-100 hover:bg-blue-50 cursor-pointer truncate text-blue-700"
-                title={u}
+                title={item.url}
               >
-                {u}
+                {item.title || "Không có tiêu đề"}
               </div>
             ))}
           </div>
@@ -137,7 +137,6 @@ export default function App() {
 
         {/* Main content */}
         <main className="flex-1 flex flex-col min-h-0">
-          {/* Content */}
           <div className="flex-1 overflow-y-auto bg-white p-6 shadow-inner rounded-t-lg min-h-0">
             {article ? (
               <>
@@ -157,25 +156,36 @@ export default function App() {
 
           {/* Claim input */}
           <div className="w-full p-4 border-t bg-blue-50 flex-shrink-0">
-            <input
+            <textarea
               value={claim}
               onChange={(e) => setClaim(e.target.value)}
-              onKeyDown={handleKey}
-              className="w-full p-3 border border-blue-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg bg-white text-blue-800 placeholder-blue-400"
-              placeholder="Nhập claim rồi nhấn Enter..."
+              className="w-full p-3 border border-blue-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg bg-white text-blue-800 placeholder-blue-400 min-h-[80px]"
+              placeholder="Nhập claim..."
             />
 
-            {inference && (
-              <pre className="mt-4 bg-white p-4 rounded-lg text-base text-blue-800 overflow-x-auto whitespace-pre-wrap shadow-inner border border-blue-100">
-                {JSON.stringify(inference.generated, null, 2)}
-              </pre>
-            )}
+            <button
+              onClick={sendInference}
+              disabled={loading}
+              className={`mt-3 w-full py-3 rounded-lg text-white text-lg font-semibold ${
+                loading ? "bg-blue-300" : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {loading ? "Đang xử lý..." : "Gửi kiểm chứng"}
+            </button>
 
+            {inference && (
+              <div className="mt-4 bg-white p-4 rounded-lg text-base text-blue-800 shadow-inner border border-blue-100">
+                <p><b>Generated:</b> {inference.generated}</p>
+                <p><b>Label:</b> {inference.label}</p>
+                <p><b>Probabilities:</b></p>
+                <pre className="bg-blue-50 p-2 rounded border border-blue-100 overflow-x-auto">
+                  {JSON.stringify(inference.probs, null, 2)}
+                </pre>
+              </div>
+            )}
           </div>
         </main>
       </div>
     </div>
-
-
   );
 }
