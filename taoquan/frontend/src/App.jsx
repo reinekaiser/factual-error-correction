@@ -155,20 +155,23 @@ export default function App() {
           </div>
 
           <div className="w-full p-4 border-t bg-blue-50 flex-shrink-0">
-            <div className="flex items-start gap-3">
+            <div className="flex items-stretch gap-3">
               <textarea
                 value={claim}
                 onChange={(e) => setClaim(e.target.value)}
-                className="flex-1 p-3 border border-blue-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg bg-white text-blue-800 placeholder-blue-400 min-h-[80px]"
+                className="flex-1 p-3 border border-blue-200 rounded-lg shadow-sm 
+                          focus:outline-none focus:ring-2 focus:ring-blue-400 
+                          text-lg bg-white text-blue-800 placeholder-blue-400 
+                          min-h-[80px]"
                 placeholder="Nhập claim..."
               />
 
               <button
                 onClick={sendInference}
                 disabled={loading}
-                className={`px-4 py-2 rounded-lg text-white text-base font-semibold ${
-                  loading ? "bg-blue-300" : "bg-blue-600 hover:bg-blue-700"
-                }`}
+                className={`w-[90px] p-3 border border-blue-200 rounded-lg shadow-sm
+                            flex items-center justify-center text-white text-base font-semibold
+                            ${loading ? "bg-blue-300" : "bg-blue-600 hover:bg-blue-700"}`}
               >
                 {loading ? "..." : "Gửi"}
               </button>
