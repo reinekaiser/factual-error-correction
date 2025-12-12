@@ -154,24 +154,25 @@ export default function App() {
             )}
           </div>
 
-          {/* Claim input */}
           <div className="w-full p-4 border-t bg-blue-50 flex-shrink-0">
-            <textarea
-              value={claim}
-              onChange={(e) => setClaim(e.target.value)}
-              className="w-full p-3 border border-blue-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg bg-white text-blue-800 placeholder-blue-400 min-h-[80px]"
-              placeholder="Nhập claim..."
-            />
+            <div className="flex items-start gap-3">
+              <textarea
+                value={claim}
+                onChange={(e) => setClaim(e.target.value)}
+                className="flex-1 p-3 border border-blue-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg bg-white text-blue-800 placeholder-blue-400 min-h-[80px]"
+                placeholder="Nhập claim..."
+              />
 
-            <button
-              onClick={sendInference}
-              disabled={loading}
-              className={`mt-3 w-full py-3 rounded-lg text-white text-lg font-semibold ${
-                loading ? "bg-blue-300" : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {loading ? "Đang xử lý..." : "Gửi kiểm chứng"}
-            </button>
+              <button
+                onClick={sendInference}
+                disabled={loading}
+                className={`px-4 py-2 rounded-lg text-white text-base font-semibold ${
+                  loading ? "bg-blue-300" : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {loading ? "..." : "Gửi"}
+              </button>
+            </div>
 
             {inference && (
               <div className="mt-4 bg-white p-4 rounded-lg text-base text-blue-800 shadow-inner border border-blue-100">
@@ -184,6 +185,7 @@ export default function App() {
               </div>
             )}
           </div>
+
         </main>
       </div>
     </div>

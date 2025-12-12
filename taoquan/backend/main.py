@@ -98,8 +98,8 @@ if __name__ == "__main__":
             top_sentences, _ = retriver.retrieve_evidence(text, evidence, top_k = 5)
             evidence = ".".join(top_sentences)
         result = predictor.generate_single(text, evidence)
-        label, probs = verifier.predict(result, evidence)
-        return {"text": text, "generated": result, "label": label, "probs": probs}
+        verified_result = verifier.predict(result, evidence)
+        return {"text": text, "generated": result, "label": verified_result["label"], "probs": verified_result["probs"]}
 
     public_url = ngrok.connect(8000)
     print("Public URL:", public_url)
@@ -109,6 +109,3 @@ if __name__ == "__main__":
 
     thread = threading.Thread(target=run_app)
     thread.start()
-
-
-
