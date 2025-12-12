@@ -99,7 +99,8 @@ if __name__ == "__main__":
             evidence = ".".join(top_sentences)
         result = predictor.generate_single(text, evidence)
         verified_result = verifier.predict(result, evidence)
-        return {"text": text, "generated": result, "label": verified_result["label"], "probs": verified_result["probs"]}
+        label_map = ["Support", "Refute", "NEI"]
+        return {"text": text, "generated": result, "label": label_map[verified_result["label"]], "probs": verified_result["probs"][verified_result["label"]]}
 
     public_url = ngrok.connect(8000)
     print("Public URL:", public_url)
