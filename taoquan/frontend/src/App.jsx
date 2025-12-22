@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./index.css";
 
-const BASE_URL = import.meta.env.VITE_BE_BASE_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_BE_BASE_URL || "https://capably-conceptacular-jerilyn.ngrok-free.dev";
 
 export default function App() {
   const [urls, setUrls] = useState([]);
@@ -10,7 +10,7 @@ export default function App() {
   const [claim, setClaim] = useState("");
   const [inference, setInference] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const [maskStrategy, setMaskStrategy] = useState('heuristic')
   const [page, setPage] = useState(1);
   const [chunkSize] = useState(10);
   const [totalUrls, setTotalUrls] = useState(0);
@@ -59,10 +59,16 @@ export default function App() {
 
     try {
       const res = await fetch(
-        `${BASE_URL}/news/inference?text=${encodeURIComponent(
-          claim
-        )}&evidence=${encodeURIComponent(content)}`,
-        { headers: { "ngrok-skip-browser-warning": "true" } }
+        `${BASE_URL}/news/inference`,
+        {
+          method: "POST",
+          headers: { "ngrok-skip-browser-warning": "true" } ,
+          body: JSON.stringify({
+            text: claim,
+            evidence: content,
+            mask_strategy: maskStrategy,
+          }),
+        }
       );
       const data = await res.json();
       setInference(data);

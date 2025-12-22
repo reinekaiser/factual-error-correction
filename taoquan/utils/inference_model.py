@@ -3,9 +3,10 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from underthesea import word_tokenize
 import asyncio
 import random, math
+from .lime_masker import lime_mask
 
 class Seq2SeqPredictor:
-    def __init__(self, model_name_or_path: str, device=None):
+    def __init__(self, model_name_or_path: str, verifier_model_name_or_path, device=None):
         """
         Init: load model + tokenizer, fixed hyperparams
         """
@@ -24,6 +25,7 @@ class Seq2SeqPredictor:
         self.num_return_sequences = 1
         self.repetition_penalty = 1.2
         self.temperature = 1.0
+        self.verifier_model_name_or_path = verifier_model_name_or_path
 
     def word_segment(self, text):
         return word_tokenize(text, format="text")
@@ -68,23 +70,26 @@ class Seq2SeqPredictor:
 
         return src_tokens
 
-    def prepare_input(self, src_text, evidence=None, use_evidence=True):
+    def prepare_input(self, src_text, evidence=None, use_evidence=True, mask_strategy='heuristic'):
         """
         Build input text for model
         """
-        masked_src = self.mask(src_text, evidence)
+        if mask_strategy == 'lime':
+            masked_src = lime_mask(self.verifier_model_name_or_path, src_text, evidence)
+        else:
+            masked_src = self.mask(src_text, evidence)
         input_text = masked_src
         if use_evidence and evidence:
             input_text += " bằng chứng: " + evidence
         return input_text
 
-    def generate_single(self, src_text, evidence=None, use_evidence=True):
+    def generate_single(self, src_text, evidence=None, use_evidence=True, mask_strategy='heuristic'):
         """
         Generate output cho 1 sample, theo đúng format dataset
         """
         self.model.eval()
 
-        input_text = self.prepare_input(src_text, evidence, use_evidence)
+        input_text = self.prepare_input(src_text, evidence, use_evidence, mask_strategy)
 
         src_tokenization = torch.tensor(
             self.tokenizer.encode(

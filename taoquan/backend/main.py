@@ -10,6 +10,8 @@ from taoquan.utils.inference_model import Seq2SeqPredictor
 from taoquan.utils.sbert import SentenceRetriever
 from taoquan.utils.verfier import Verifier
 import argparse
+from pydantic import BaseModel
+from typing import Optional, Literal
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -21,9 +23,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     crawler = NewsCrawler()
-    predictor = Seq2SeqPredictor(model_name_or_path=args.model_path)
+    predictor = Seq2SeqPredictor(args.model_path, args.verifier_path)
     retriver = SentenceRetriever(model_name=args.sbert_path)
     verifier = Verifier(model_name_or_path=args.verifier_path)
+
+    class InferenceRequest(BaseModel):
+        text: str
+        evidence: Optional[str] = None
+        mask_strategy: Literal["none", "random", "span"] = "none"
 
     app = FastAPI()
 
@@ -90,14 +97,17 @@ if __name__ == "__main__":
         article = crawler.crawl_single(url)
         return article
 
-    @app.get("/news/inference")
-    def get_inference(text: str, evidence=None):
+    @app.post("/news/inference")
+    def get_inference(req: InferenceRequest):
+        text = req.text
+        evidence = req.evidence
+        mask_strategy = req.mask_strategy
         if evidence and len(evidence.split(".")) > 5:
             evidence = evidence.replace("\n", "")
             evidence = evidence.split(".")
             top_sentences, _ = retriver.retrieve_evidence(text, evidence, top_k = 5)
             evidence = ".".join(top_sentences)
-        result = predictor.generate_single(text, evidence)
+        result = predictor.generate_single(text, evidence, mask_strategy)
         verified_result = verifier.predict(result, evidence)
         label_map = ["Support", "Refute", "NEI"]
         return {"text": text, "generated": result, "label": label_map[verified_result["label"]], "probs": verified_result["probs"][verified_result["label"]]}
