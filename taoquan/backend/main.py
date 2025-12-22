@@ -30,7 +30,7 @@ if __name__ == "__main__":
     class InferenceRequest(BaseModel):
         text: str
         evidence: Optional[str] = None
-        mask_strategy: Literal["none", "random", "span"] = "none"
+        mask_strategy: Optional[str] = None
 
     app = FastAPI()
 
