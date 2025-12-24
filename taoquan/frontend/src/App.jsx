@@ -62,7 +62,10 @@ export default function App() {
         `${BASE_URL}/news/inference`,
         {
           method: "POST",
-          headers: { "ngrok-skip-browser-warning": "true" } ,
+          headers: { 
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true" 
+          } ,
           body: JSON.stringify({
             text: claim,
             evidence: content,
