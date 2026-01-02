@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "./index.css";
+import "./index.css"; 
 
 const BASE_URL = import.meta.env.VITE_BE_BASE_URL || "https://capably-conceptacular-jerilyn.ngrok-free.dev";
 
@@ -83,7 +83,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col font-sans text-gray-800 bg-blue-50">
+    <div className="h-screen w-screen flex flex-col font-sans text-gray-800 bg-blue-50">
       <header className="w-full bg-blue-600 text-white p-4 text-2xl font-bold shadow-md">
         Táo quân 2025
       </header>

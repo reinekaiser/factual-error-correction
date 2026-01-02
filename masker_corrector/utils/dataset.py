@@ -18,7 +18,7 @@ class Seq2SeqDataset(Dataset):
                  source_prefix = None, dataset_percent = 1.0, num_data_instance = -1,
                  inference=False, start_idx = None, end_idx = None,
                  ignore_label = 2, gold_evidence_column = "Evidence", retrieved_evidence_column = "retrieved_evidence_list", 
-                 claim_column = "Statement", label_column = "labels",
+                 claim_column = "Statement", label_column = "labels", mask_claim_column="masked_claim",
                  mask_ratio=0.15, mask_strategy='random', merge_mask=False, initialization='VietAI/vit5-base'):
         """
         Args:
@@ -57,6 +57,7 @@ class Seq2SeqDataset(Dataset):
         self.claim_column = claim_column
         self.label_column = label_column
         self.ignore_label = ignore_label
+        self.mask_claim_column = mask_claim_column
 
         print(f'Load source data from {self.filename}.')
         self.data_list = []
@@ -73,6 +74,7 @@ class Seq2SeqDataset(Dataset):
                 if self.inference:
                     if int(instance[self.label_column]) == self.ignore_label:
                         continue
+                        
                 if self.use_evidence:
                     if self.use_gold_evidence:
                         evidence = instance[self.gold_evidence_column]
@@ -109,6 +111,8 @@ class Seq2SeqDataset(Dataset):
             
         self.len = len(self.data_list)
 
+        print(self.initialization)
+
     def word_segment(self, text):
         return word_tokenize(text, format="text")
         
@@ -116,11 +120,12 @@ class Seq2SeqDataset(Dataset):
         src_text = instance["src"]
         evidence = instance["evidence"]
         
-        masked_src_text = mask(src_text=src_text, evidence=evidence, tokenizer=self.tokenizer ,mask_ratio=self.mask_ratio, 
+        if self.mask_strategy == 'lime':
+            masked_src_text = instance['original'][self.mask_claim_column]
+        else:
+            masked_src_text = mask(src_text=src_text, evidence=evidence, tokenizer=self.tokenizer ,mask_ratio=self.mask_ratio, 
                                mask_strategy=self.mask_strategy, merge_mask=self.merge_mask)
 
-        if self.initialization == "vinai/bartpho-word-base":
-            masked_src_text = self.word_segment(masked_src_text)
 
         instance["masked_src"] = masked_src_text
         
@@ -137,6 +142,7 @@ class Seq2SeqDataset(Dataset):
         data_instance = self.data_list[idx]
         src = self.source_prefix + self.prepare_src(data_instance)
         if self.initialization == "vinai/bartpho-word-base":
+            src = self.word_segment(src)
             tgt = self.word_segment(data_instance['tgt'])
         else:
             tgt = data_instance['tgt']
@@ -179,6 +185,7 @@ class Seq2SeqDataset(Dataset):
 
         decoder_input_list = [s['tgt_tokenization'][:-1] for s in samples]
         decoder_label_list = [s['tgt_tokenization'][1:] for s in samples]
+        
         decoder_inputs = pad_sequence(decoder_input_list, batch_first=True, padding_value=self.tokenizer.pad_token_id)
         decoder_labels = pad_sequence(decoder_label_list, batch_first=True, padding_value=-100)
 
